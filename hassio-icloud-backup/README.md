@@ -1,40 +1,81 @@
 # Home Assistant iCloud Backup Add-on
 
-✅ **NOW WORKING!** Uses rclone's native iCloud Drive support.
+⚠️ **IMPORTANT: Current Status** ⚠️
 
-This add-on automatically uploads Home Assistant snapshots/backups to **iCloud Drive** using rclone.
+This add-on uses rclone's iCloud Drive backend, which **requires interactive terminal authentication**. The web UI can collect your 2FA code, but the actual authentication process needs manual setup.
 
-## How It Works
+## Known Limitation
 
-Uses [rclone's iCloud Drive backend](https://rclone.org/iclouddrive/) which properly handles Apple's authentication including 2FA.
+Rclone's iCloud Drive backend requires:
+1. Interactive terminal access for first-time authentication
+2. Manual entry of 2FA code during the rclone config process
+3. Session tokens are then saved for future use
 
-## First-Time Setup (2FA Authentication)
+**This cannot be fully automated through a web interface** due to how rclone's authentication works.
 
-On first run, you need to authenticate with iCloud and handle 2FA:
+## Alternative: Manual Setup via SSH/Terminal
 
-### Step 1: Install and Configure
+If you have SSH access to your Home Assistant instance:
 
-1. Install this add-on
-2. Configure your Apple ID and password in the Configuration tab
-3. **Start the add-on** (it will fail - this is expected)
+```bash
+# Access the add-on container
+docker exec -it addon_local_hassio-icloud-backup /bin/bash
 
-### Step 2: Complete 2FA Authentication
+# Run rclone config
+rclone config
 
-1. Go to the add-on page
-2. Click on the **"Open Web UI"** or use the Terminal
-3. Run: `rclone config`
-4. Follow the interactive prompts:
-   - Choose: `n` for new remote (if needed)
-   - Type: `iclouddrive`
-   - Enter your Apple ID
-   - Enter your password (regular password OR app-specific password)
-   - **Enter the 2FA code** when prompted
-5. The session token will be saved automatically
-6. Exit the config: `q`
+# Follow the prompts:
+# - Choose: n (new remote)
+# - Name: icloud
+# - Type: iclouddrive  
+# - Enter your Apple ID
+# - Enter your password
+# - Enter 2FA code when prompted
+# - Save and exit
 
-### Step 3: Restart the Add-on
+# Exit container
+exit
+```
 
-After completing the rclone config, **restart the add-on**. It will now use the saved session token and work without prompting for 2FA again!
+After manual setup, the add-on will use the saved session for backups.
+
+## Why This Is Difficult
+
+Apple's iCloud Drive doesn't have a simple API. Rclone works by:
+1. Starting an interactive authentication session
+2. Apple sends a 2FA code to your devices  
+3. You enter the code in the terminal
+4. Rclone receives and saves session tokens
+
+**We cannot trigger step 2 (Apple sending the code) without interactive terminal access.**
+
+## Recommended Solution
+
+**Use the SSH add-on** to access your Home Assistant terminal and run `rclone config` manually once. After that, this add-on will work automatically for all future backups.
+
+### Easy Setup with Terminal & SSH Add-on:
+
+1. Install "Terminal & SSH" add-on from the official add-on store
+2. Start it and open its Web UI
+3. Run these commands:
+```bash
+# Access this add-on's container
+docker exec -it addon_local_hassio-icloud-backup /bin/bash
+
+# Run rclone setup
+rclone config
+
+# Follow prompts (choose 'n' for new, type 'iclouddrive')
+# Enter your Apple ID and password when asked
+# Apple will NOW send 2FA code to your iPhone
+# Enter the 6-digit code
+# Press 'q' to quit config
+# Type 'exit' to leave container
+```
+4. Restart this add-on
+5. Done! Backups will now sync automatically
+
+## Configuration Options
 
 ## Configuration Options
 

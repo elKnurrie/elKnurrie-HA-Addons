@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.3.0] - 2025-10-28
+
+### Changed
+- Update documentation with realistic setup instructions
+- Clarify that rclone requires interactive terminal for initial auth
+- Provide clear SSH/Terminal add-on setup guide
+- Authentication actually triggers Apple to send 2FA now
+
+### Documentation
+- Honest explanation of limitations
+- Step-by-step Terminal & SSH add-on setup
+- Explain why web form alone cannot trigger Apple's 2FA
+
+**Note:** The web UI remains for future enhancements, but initial
+setup requires SSH/Terminal access to run `rclone config`.
+
 ## [3.2.4] - 2025-10-28
 
 ### Fixed
