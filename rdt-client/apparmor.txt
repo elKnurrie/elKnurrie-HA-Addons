@@ -1,0 +1,59 @@
+#include <tunables/global>
+
+profile rdt-client flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  # Enhanced capabilities for S6 overlay
+  capability,
+  capability net_bind_service,
+  capability chown,
+  capability fowner,
+  capability setuid,
+  capability setgid,
+  capability sys_admin,
+
+  # Network access
+  network inet stream,
+  network inet6 stream,
+
+  # File access - be more permissive
+  /data/** rwk,
+  /share/** rwk,
+  /tmp/** rwk,
+  /var/** rwk,
+  /run/** rwk,
+  /proc/** r,
+  /sys/** r,
+  
+  # Application files
+  /app/** rix,
+  /usr/** rix,
+  /bin/** rix,
+  /sbin/** rix,
+  /lib/** rix,
+  /lib64/** rix,
+  
+  # System files
+  /etc/** r,
+  
+  # Our custom scripts
+  /usr/local/bin/ha-setup.sh rix,
+  /custom-init rix,
+  
+  # S6 overlay system - comprehensive permissions
+  /init rix,
+  /package/** rix,
+  /command/** rix,
+  /run/s6/** rwk,
+  /run/service/** rwk,
+  /var/run/s6/** rwk,
+  /usr/bin/s6-* rix,
+  /bin/s6-* rix,
+  
+  # Allow directory creation in /run
+  /run/ rw,
+  /run/* rwk,
+  
+  # Minimal denials
+  deny /root/.* rwklx,
+}
