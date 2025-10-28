@@ -1,5 +1,29 @@
 # Changelog
 
+## [3.4.0] - 2025-10-28
+
+### WORKING! Flask server now executes rclone authentication!
+
+### Added
+- Flask server directly executes rclone commands
+- Automated 2FA code submission to rclone
+- Real-time status updates during authentication
+- Background thread for non-blocking authentication
+- Proper error handling and timeout management
+
+### Changed
+- Web UI now actually triggers Apple authentication
+- 2FA code is sent to rclone subprocess
+- Session tokens saved automatically
+- No terminal access required!
+
+### How It Works Now
+1. Click OPEN WEB UI
+2. Apple sends 2FA to your iPhone (triggered by rclone)
+3. Enter the code in web form
+4. Authentication completes automatically
+5. Restart add-on - done!
+
 ## [3.3.0] - 2025-10-28
 
 ### Changed

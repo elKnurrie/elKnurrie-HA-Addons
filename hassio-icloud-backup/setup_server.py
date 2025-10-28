@@ -6,6 +6,9 @@ Supports Home Assistant Ingress
 from flask import Flask, render_template_string, request, jsonify, abort
 import json
 import os
+import subprocess
+import threading
+import time
 
 app = Flask(__name__)
 
@@ -15,6 +18,13 @@ INGRESS_PATH = os.environ.get('INGRESS_PATH', '')
 # Ingress security: Only allow connections from Home Assistant ingress gateway
 # when running under Ingress (INGRESS_PATH is set)
 INGRESS_GATEWAY_IP = '172.30.32.2'
+
+# Global state for authentication process
+auth_state = {
+    'status': 'waiting',  # waiting, authenticating, success, error
+    'message': '',
+    'process': None
+}
 
 @app.before_request
 def limit_remote_addr():
@@ -187,6 +197,18 @@ HTML_TEMPLATE = """
         
         // Auto-focus the input field
         document.getElementById('twofa_code').focus();
+        
+        // Poll for status updates during authentication
+        setInterval(async () => {
+            try {
+                const response = await fetch('/status');
+                const result = await response.json();
+                if (result.authenticating) {
+                    document.getElementById('status').innerHTML = 
+                        '<div class="status info">⏳ ' + result.message + '</div>';
+                }
+            } catch (e) {}
+        }, 2000);
     </script>
 </body>
 </html>
@@ -196,6 +218,84 @@ def load_config():
     with open('/data/options.json', 'r') as f:
         return json.load(f)
 
+def authenticate_with_rclone(username, password, twofa_code):
+    """Actually run rclone authentication with 2FA code"""
+    try:
+        print(f"[INFO] Starting rclone authentication for {username}")
+        auth_state['status'] = 'authenticating'
+        auth_state['message'] = 'Initializing rclone...'
+        
+        # Create rclone config directory
+        os.makedirs('/root/.config/rclone', exist_ok=True)
+        
+        # Create initial config
+        obscured_pass = subprocess.check_output(['rclone', 'obscure', password]).decode().strip()
+        
+        config_content = f"""[icloud]
+type = iclouddrive
+user = {username}
+pass = {obscured_pass}
+"""
+        
+        with open('/root/.config/rclone/rclone.conf', 'w') as f:
+            f.write(config_content)
+        
+        print(f"[INFO] Config created, attempting connection...")
+        auth_state['message'] = 'Connecting to iCloud (Apple will send 2FA now)...'
+        
+        # Try to list iCloud Drive - this will trigger 2FA
+        # We pass the code via stdin when rclone prompts
+        proc = subprocess.Popen(
+            ['rclone', 'lsd', 'icloud:', '--verbose'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+        
+        # Send the 2FA code immediately
+        print(f"[INFO] Sending 2FA code: {twofa_code}")
+        proc.stdin.write(f"{twofa_code}\n")
+        proc.stdin.flush()
+        proc.stdin.close()
+        
+        # Wait for completion (with timeout)
+        try:
+            output, _ = proc.communicate(timeout=45)
+            
+            print(f"[DEBUG] rclone output:\n{output}")
+            
+            if proc.returncode == 0 or "trust token" in output.lower():
+                print("[INFO] ✅ Authentication successful!")
+                auth_state['status'] = 'success'
+                auth_state['message'] = 'Authentication successful!'
+                
+                # Mark as configured
+                with open('/data/icloud_session_configured', 'w') as f:
+                    f.write('configured')
+                
+                return True
+            else:
+                print(f"[ERROR] Authentication failed: {output}")
+                auth_state['status'] = 'error'
+                auth_state['message'] = f'Authentication failed. Check your credentials and 2FA code.'
+                return False
+                
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            print("[ERROR] Authentication timed out")
+            auth_state['status'] = 'error'
+            auth_state['message'] = 'Authentication timed out - Apple may not have sent 2FA'
+            return False
+            
+    except Exception as e:
+        print(f"[ERROR] Exception during authentication: {e}")
+        import traceback
+        traceback.print_exc()
+        auth_state['status'] = 'error'
+        auth_state['message'] = f'Error: {str(e)}'
+        return False
+
 @app.route('/')
 def index():
     config = load_config()
@@ -204,6 +304,15 @@ def index():
         username=config.get('icloud_username', ''),
         ingress_path=''  # Ingress handles the path automatically
     )
+
+@app.route('/status')
+def status():
+    """Return current authentication status"""
+    return jsonify({
+        'authenticating': auth_state['status'] == 'authenticating',
+        'message': auth_state['message'],
+        'status': auth_state['status']
+    })
 
 @app.route('/setup', methods=['POST'])
 def setup():
@@ -215,15 +324,31 @@ def setup():
     
     config = load_config()
     username = config.get('icloud_username', '')
+    password = config.get('icloud_password', '')
     
-    # Save 2FA code to trigger authentication in run.sh
-    with open('/data/icloud_2fa_code.txt', 'w') as f:
-        f.write(twofa_code)
+    if not username or not password:
+        return jsonify({'success': False, 'message': 'Username and password not configured'})
     
-    return jsonify({
-        'success': True,
-        'message': f'Authentication code saved for {username}!'
-    })
+    # Start authentication in background thread
+    def auth_thread():
+        authenticate_with_rclone(username, password, twofa_code)
+    
+    thread = threading.Thread(target=auth_thread)
+    thread.start()
+    
+    # Wait for authentication to complete (with timeout)
+    thread.join(timeout=50)
+    
+    if auth_state['status'] == 'success':
+        return jsonify({
+            'success': True,
+            'message': f'Successfully authenticated! Session saved for {username}.'
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'message': auth_state.get('message', 'Authentication failed')
+        })
 
 if __name__ == '__main__':
     port = int(os.environ.get('INGRESS_PORT', 8099))
