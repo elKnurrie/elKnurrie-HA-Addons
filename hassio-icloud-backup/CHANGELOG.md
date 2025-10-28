@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.5] - 2025-10-28
+
+### Changed
+- Add temporary debug logging to verify password is passed correctly
+- Show password length and format in logs (TEMPORARY - for debugging)
+- **WARNING**: This version logs the full password - remove after testing!
+
 ## [2.0.4] - 2025-10-28
 
 ### Fixed
