@@ -1,6 +1,6 @@
 {
   "name": "Home Assistant iCloud Backup",
-  "version": "3.2.3",
+  "version": "3.2.4",
   "slug": "hassio-icloud-backup",
   "description": "Backup Home Assistant snapshots to iCloud Drive using rclone",
   "url": "https://github.com/elKnurrie/elKnurrie-HA-Addons",

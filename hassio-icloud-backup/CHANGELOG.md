@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.2.4] - 2025-10-28
+
+### Fixed
+- Fix 503 error: Only enforce IP whitelist when INGRESS_PATH is set
+- Allow all IPs in standalone mode (when Ingress is not active)
+- Add better logging to show IP restriction mode
+
+### Changed
+- IP restriction only applies when running under Ingress
+- Standalone mode allows connections from any IP
+
 ## [3.2.3] - 2025-10-28
 
 ### Fixed

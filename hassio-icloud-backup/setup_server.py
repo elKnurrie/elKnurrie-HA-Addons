@@ -13,14 +13,18 @@ app = Flask(__name__)
 INGRESS_PATH = os.environ.get('INGRESS_PATH', '')
 
 # Ingress security: Only allow connections from Home Assistant ingress gateway
-ALLOWED_IP = '172.30.32.2'
+# when running under Ingress (INGRESS_PATH is set)
+INGRESS_GATEWAY_IP = '172.30.32.2'
 
 @app.before_request
 def limit_remote_addr():
-    """Ensure requests only come from Home Assistant Ingress gateway"""
-    if request.remote_addr != ALLOWED_IP:
-        app.logger.warning(f"Rejected request from {request.remote_addr}")
-        abort(403)  # Forbidden
+    """Ensure requests only come from Home Assistant Ingress gateway when using Ingress"""
+    # Only enforce IP restriction if running under Ingress
+    if INGRESS_PATH:
+        if request.remote_addr != INGRESS_GATEWAY_IP:
+            app.logger.warning(f"Rejected request from {request.remote_addr} (expected {INGRESS_GATEWAY_IP})")
+            abort(403)  # Forbidden
+    # Allow all IPs in standalone mode (no INGRESS_PATH)
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -228,8 +232,10 @@ if __name__ == '__main__':
     if INGRESS_PATH:
         print(f"[INFO] Running with Home Assistant Ingress support")
         print(f"[INFO] Ingress path: {INGRESS_PATH}")
+        print(f"[INFO] IP restriction: Only {INGRESS_GATEWAY_IP} allowed")
     else:
         print(f"[INFO] Running in standalone mode")
+        print(f"[INFO] All IPs allowed (no Ingress)")
     
     # Run with threaded=True for better Ingress support
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True, use_reloader=False)
