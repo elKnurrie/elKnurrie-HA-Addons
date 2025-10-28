@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.6] - 2025-10-28
+
+### Changed
+- Removed password debug logging
+- Cleaned up test files
+- Project on hold due to Apple iCloud Drive API limitations
+
+### Note
+Apple's iCloud Drive does not support app-specific passwords via the pyicloud API.
+This add-on is currently non-functional and requires alternative approaches.
+
 ## [2.0.5] - 2025-10-28
 
 ### Changed

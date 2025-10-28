@@ -50,11 +50,6 @@ def authenticate_icloud(username, password):
     logger.info("Authenticating with iCloud...")
     logger.info(f"Using Apple ID: {username}")
     
-    # DEBUG: Show password format (REMOVE AFTER TESTING!)
-    logger.info(f"Password length: {len(password)} characters")
-    logger.info(f"Password format check: starts with '{password[:4]}', ends with '{password[-4:]}'")
-    logger.info(f"Full password (DEBUG - REMOVE THIS): {password}")
-    
     try:
         # Use a persistent cookie directory
         cookie_dir = '/data'
