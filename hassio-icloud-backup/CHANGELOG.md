@@ -1,5 +1,27 @@
 # Changelog
 
+## [3.5.0] - 2025-10-28
+
+### Added
+- **"Request 2FA Code" button** - explicitly triggers Apple authentication
+- Two-step authentication flow for clarity
+- Process persistence between request and code submission
+- Better user guidance and instructions
+
+### Changed
+- Authentication no longer auto-triggers on page load
+- User must click button to request 2FA code from Apple
+- Form only appears after 2FA request is sent
+- Clearer separation between requesting code and entering code
+
+### How It Works Now
+1. Click "OPEN WEB UI"
+2. Click **"Request 2FA Code from Apple"** button
+3. **Apple NOW sends 2FA to your iPhone** ✅
+4. Enter the 6-digit code
+5. Click "Authenticate with iCloud"
+6. Restart add-on - done!
+
 ## [3.4.0] - 2025-10-28
 
 ### WORKING! Flask server now executes rclone authentication!

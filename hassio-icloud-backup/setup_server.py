@@ -129,17 +129,21 @@ HTML_TEMPLATE = """
         </div>
         
         <div class="steps">
-            <strong>How to get your 2FA code:</strong>
+            <strong>Setup Steps:</strong>
             <ol>
-                <li>Check your trusted Apple device (iPhone, iPad, Mac)</li>
-                <li>You should receive a 6-digit verification code</li>
-                <li>Enter that code below</li>
+                <li><strong>Click "Request 2FA Code"</strong> below to trigger authentication</li>
+                <li>Apple will send a 6-digit code to your iPhone/iPad</li>
+                <li>Enter that code in the field below</li>
+                <li>Click "Authenticate with iCloud"</li>
             </ol>
         </div>
         
         <div id="status"></div>
         
-        <form id="setupForm">
+        <button id="requestCodeBtn" type="button" onclick="requestCode()">📱 Request 2FA Code from Apple</button>
+        <br><br>
+        
+        <form id="setupForm" style="display:none">
             <label>Apple ID:</label>
             <input type="text" class="readonly-field" value="{{ username }}" readonly>
             
@@ -160,6 +164,41 @@ HTML_TEMPLATE = """
     </div>
     
     <script>
+        async function requestCode() {
+            const statusDiv = document.getElementById('status');
+            const requestBtn = document.getElementById('requestCodeBtn');
+            
+            requestBtn.disabled = true;
+            requestBtn.textContent = '⏳ Requesting 2FA code from Apple...';
+            statusDiv.innerHTML = '<div class="status info">⏳ Connecting to Apple iCloud...<br>Please wait, this may take 10-15 seconds...</div>';
+            
+            try {
+                const response = await fetch('/request_code', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    statusDiv.innerHTML = '<div class="status success">✅ ' + result.message + 
+                        '<br><br><strong>Check your iPhone/iPad for the 6-digit code!</strong></div>';
+                    // Show the form
+                    document.getElementById('setupForm').style.display = 'block';
+                    document.getElementById('twofa_code').focus();
+                    requestBtn.style.display = 'none';
+                } else {
+                    statusDiv.innerHTML = '<div class="status error">❌ ' + result.message + '</div>';
+                    requestBtn.disabled = false;
+                    requestBtn.textContent = '📱 Request 2FA Code from Apple';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="status error">❌ Connection error: ' + error + '</div>';
+                requestBtn.disabled = false;
+                requestBtn.textContent = '📱 Request 2FA Code from Apple';
+            }
+        }
+        
         document.getElementById('setupForm').onsubmit = async (e) => {
             e.preventDefault();
             const code = document.getElementById('twofa_code').value;
@@ -168,7 +207,7 @@ HTML_TEMPLATE = """
             
             button.disabled = true;
             button.textContent = 'Authenticating...';
-            statusDiv.innerHTML = '<div class="status info">⏳ Connecting to iCloud...</div>';
+            statusDiv.innerHTML = '<div class="status info">⏳ Verifying 2FA code with Apple...</div>';
             
             try {
                 const response = await fetch('/setup', {
@@ -183,8 +222,10 @@ HTML_TEMPLATE = """
                     statusDiv.innerHTML = '<div class="status success">✅ ' + result.message + 
                         '<br><br><strong>Next step:</strong> Go back to the add-on page and click RESTART.</div>';
                     document.getElementById('twofa_code').value = '';
+                    button.style.display = 'none';
                 } else {
-                    statusDiv.innerHTML = '<div class="status error">❌ ' + result.message + '</div>';
+                    statusDiv.innerHTML = '<div class="status error">❌ ' + result.message + 
+                        '<br><br>Please try again with a new code.</div>';
                     button.disabled = false;
                     button.textContent = '✓ Authenticate with iCloud';
                 }
@@ -194,9 +235,6 @@ HTML_TEMPLATE = """
                 button.textContent = '✓ Authenticate with iCloud';
             }
         };
-        
-        // Auto-focus the input field
-        document.getElementById('twofa_code').focus();
         
         // Poll for status updates during authentication
         setInterval(async () => {
@@ -314,6 +352,71 @@ def status():
         'status': auth_state['status']
     })
 
+@app.route('/request_code', methods=['POST'])
+def request_code():
+    """Trigger Apple to send 2FA code by initiating authentication"""
+    try:
+        config = load_config()
+        username = config.get('icloud_username', '')
+        password = config.get('icloud_password', '')
+        
+        if not username or not password:
+            return jsonify({'success': False, 'message': 'Username and password not configured'})
+        
+        print(f"[INFO] Triggering 2FA request for {username}")
+        
+        # Create rclone config directory
+        os.makedirs('/root/.config/rclone', exist_ok=True)
+        
+        # Create initial config
+        obscured_pass = subprocess.check_output(['rclone', 'obscure', password]).decode().strip()
+        
+        config_content = f"""[icloud]
+type = iclouddrive
+user = {username}
+pass = {obscured_pass}
+"""
+        
+        with open('/root/.config/rclone/rclone.conf', 'w') as f:
+            f.write(config_content)
+        
+        print("[INFO] Config created, initiating connection to trigger 2FA...")
+        
+        # Start rclone connection in background - this will trigger Apple to send 2FA
+        # We don't wait for it to complete, just start it
+        proc = subprocess.Popen(
+            ['rclone', 'lsd', 'icloud:', '--verbose'],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+        
+        # Store the process so we can send the code to it later
+        auth_state['process'] = proc
+        auth_state['status'] = 'waiting_for_code'
+        auth_state['message'] = 'Waiting for 2FA code from user'
+        
+        # Wait a moment to ensure connection started
+        import time
+        time.sleep(3)
+        
+        print("[INFO] Connection initiated - Apple should send 2FA code now")
+        
+        return jsonify({
+            'success': True,
+            'message': '2FA request sent to Apple! Check your iPhone/iPad for the code.'
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] Failed to request 2FA: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        })
+
 @app.route('/setup', methods=['POST'])
 def setup():
     data = request.json
@@ -322,32 +425,73 @@ def setup():
     if not twofa_code or len(twofa_code) != 6:
         return jsonify({'success': False, 'message': 'Invalid 2FA code format. Must be 6 digits.'})
     
-    config = load_config()
-    username = config.get('icloud_username', '')
-    password = config.get('icloud_password', '')
+    # Check if we have a waiting process
+    proc = auth_state.get('process')
+    if not proc:
+        return jsonify({'success': False, 'message': 'No authentication process waiting. Click "Request 2FA Code" first.'})
     
-    if not username or not password:
-        return jsonify({'success': False, 'message': 'Username and password not configured'})
-    
-    # Start authentication in background thread
-    def auth_thread():
-        authenticate_with_rclone(username, password, twofa_code)
-    
-    thread = threading.Thread(target=auth_thread)
-    thread.start()
-    
-    # Wait for authentication to complete (with timeout)
-    thread.join(timeout=50)
-    
-    if auth_state['status'] == 'success':
-        return jsonify({
-            'success': True,
-            'message': f'Successfully authenticated! Session saved for {username}.'
-        })
-    else:
+    try:
+        print(f"[INFO] Sending 2FA code to rclone: {twofa_code}")
+        auth_state['status'] = 'authenticating'
+        auth_state['message'] = 'Verifying 2FA code...'
+        
+        # Send the 2FA code to the waiting rclone process
+        proc.stdin.write(f"{twofa_code}\n")
+        proc.stdin.flush()
+        proc.stdin.close()
+        
+        # Wait for completion
+        try:
+            output, _ = proc.communicate(timeout=30)
+            
+            print(f"[DEBUG] rclone output:\n{output}")
+            
+            if proc.returncode == 0 or "success" in output.lower() or not ("error" in output.lower() or "failed" in output.lower()):
+                print("[INFO] ✅ Authentication successful!")
+                auth_state['status'] = 'success'
+                auth_state['message'] = 'Authentication successful!'
+                auth_state['process'] = None
+                
+                # Mark as configured
+                with open('/data/icloud_session_configured', 'w') as f:
+                    f.write('configured')
+                
+                config = load_config()
+                return jsonify({
+                    'success': True,
+                    'message': f'Successfully authenticated! Session saved for {config.get("icloud_username", "")}.'
+                })
+            else:
+                print(f"[ERROR] Authentication failed: {output}")
+                auth_state['status'] = 'error'
+                auth_state['message'] = 'Invalid 2FA code or authentication failed'
+                auth_state['process'] = None
+                return jsonify({
+                    'success': False,
+                    'message': 'Invalid 2FA code. Please request a new code and try again.'
+                })
+                
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            print("[ERROR] Authentication timed out")
+            auth_state['status'] = 'error'
+            auth_state['message'] = 'Authentication timed out'
+            auth_state['process'] = None
+            return jsonify({
+                'success': False,
+                'message': 'Authentication timed out. Please try again.'
+            })
+            
+    except Exception as e:
+        print(f"[ERROR] Exception during authentication: {e}")
+        import traceback
+        traceback.print_exc()
+        auth_state['status'] = 'error'
+        auth_state['message'] = f'Error: {str(e)}'
+        auth_state['process'] = None
         return jsonify({
             'success': False,
-            'message': auth_state.get('message', 'Authentication failed')
+            'message': f'Error: {str(e)}'
         })
 
 if __name__ == '__main__':
