@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1] - 2025-10-28
+
+### Fixed
+- Fixed Dockerfile to use apk package manager instead of pip (resolves PEP 668 error)
+- Added missing packages for FUSE mounting (fuse, ca-certificates)
+- Updated run.sh shebang to use bashio format
+- Consolidated RUN commands for better Docker layer optimization
+
 ## [1.0.0] - 2025-10-28
 
 ### Added

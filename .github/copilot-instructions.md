@@ -203,9 +203,24 @@ maintainer: Name <email@example.com>
 2. Test Dockerfile builds locally
 3. Validate config.json against schema
 4. Test add-on installation and functionality
-5. Update version numbers before release
-6. Commit and push changes
-7. Test in Home Assistant environment
+5. **Update version number in config.json for ANY file changes**
+6. Update CHANGELOG.md with version changes
+7. Commit and push changes
+8. Test in Home Assistant environment
+
+## Version Management
+**CRITICAL**: Always update the version number in `config.json` when making ANY changes to add-on files:
+- Dockerfile changes → Increment version
+- run.sh changes → Increment version
+- config.json changes → Increment version
+- Documentation changes → Increment version (optional but recommended)
+
+Follow semantic versioning:
+- `1.0.0` → `1.0.1` for bug fixes
+- `1.0.0` → `1.1.0` for new features
+- `1.0.0` → `2.0.0` for breaking changes
+
+Update CHANGELOG.md to document what changed in each version.
 
 ## When Suggesting Code
 - Always use Home Assistant conventions
