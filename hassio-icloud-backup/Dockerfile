@@ -1,21 +1,23 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install Chromium and dependencies for browser automation
+# Install rclone and dependencies
 RUN \
     apk add --no-cache \
-        chromium \
-        chromium-chromedriver \
-        python3 \
-        py3-pip \
         bash \
         jq \
-    && pip3 install --break-system-packages \
-        selenium \
-        webdriver-manager
+        curl \
+        ca-certificates \
+        unzip \
+    && curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip \
+    && unzip -o rclone-current-linux-amd64.zip \
+    && cd rclone-*-linux-amd64 \
+    && cp rclone /usr/bin/ \
+    && chmod 755 /usr/bin/rclone \
+    && cd .. \
+    && rm -rf rclone-*
 
 # Copy data for add-on
-COPY run.py /
 COPY run.sh /
 RUN chmod a+x /run.sh
 

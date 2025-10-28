@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.1.0] - 2025-10-28
+
+### ✅ WORKING SOLUTION!
+
+Complete rewrite using rclone's native iCloud Drive support!
+
+### Changed
+- Use rclone's `iclouddrive` backend (officially supported!)
+- Proper 2FA authentication through rclone config
+- Session token persistence for subsequent runs
+- Remove all Python dependencies
+- Simple bash script implementation
+
+### How It Works
+- First run: Interactive `rclone config` for 2FA
+- Session token is saved to `/data/rclone-icloud-session.txt`
+- Subsequent runs: Use saved session (no 2FA needed)
+- Standard rclone sync commands
+
+### Setup Required
+1. Install and start add-on (will fail)
+2. Run `rclone config` in terminal
+3. Complete 2FA authentication
+4. Restart add-on (now works!)
+
+**Status:** ✅ FUNCTIONAL - rclone natively supports iCloud Drive!
+
 ## [3.0.0] - 2025-10-28
 
 ### BREAKING CHANGES
