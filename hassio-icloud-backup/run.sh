@@ -29,6 +29,7 @@ mkdir -p /root/.config/rclone
 OBSCURED_PASSWORD=$(rclone obscure "$ICLOUD_PASSWORD")
 
 # Create rclone config (no indentation, proper format)
+# Note: iCloud WebDAV vendor should be "other" and we need to ensure proper URL
 cat > /root/.config/rclone/rclone.conf <<EOF
 [icloud]
 type = webdav
@@ -39,9 +40,20 @@ pass = $OBSCURED_PASSWORD
 EOF
 
 bashio::log.info "Testing iCloud connection..."
-if ! rclone lsd icloud: --max-depth 1 >/dev/null 2>&1; then
-    bashio::log.error "Failed to connect to iCloud. Please check your credentials."
-    bashio::log.info "Make sure you're using an app-specific password from appleid.apple.com"
+bashio::log.info "Using WebDAV URL: $ICLOUD_WEBDAV_URL"
+bashio::log.info "Username: $ICLOUD_USERNAME"
+
+# Test with more verbose output
+if ! rclone lsd icloud: --max-depth 1 --verbose 2>&1 | tee /tmp/rclone-debug.log; then
+    bashio::log.error "Failed to connect to iCloud WebDAV."
+    bashio::log.error "Debug output:"
+    cat /tmp/rclone-debug.log || true
+    bashio::log.info ""
+    bashio::log.info "Troubleshooting steps:"
+    bashio::log.info "1. Verify you're using an app-specific password from https://appleid.apple.com"
+    bashio::log.info "2. Make sure 2-factor authentication is enabled"
+    bashio::log.info "3. Check that iCloud Drive is enabled in your iCloud settings"
+    bashio::log.info "4. Verify the password is entered without spaces or dashes"
     exit 1
 fi
 

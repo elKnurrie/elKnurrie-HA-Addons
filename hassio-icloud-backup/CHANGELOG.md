@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.4] - 2025-10-28
+
+### Fixed
+- Add verbose debugging output for connection failures
+- Log WebDAV URL and username for troubleshooting
+- Capture and display rclone error messages
+- Improve error messages with specific troubleshooting steps
+
 ## [1.0.3] - 2025-10-28
 
 ### Fixed
