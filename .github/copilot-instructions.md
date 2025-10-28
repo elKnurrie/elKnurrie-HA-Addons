@@ -3,6 +3,12 @@
 ## Repository Overview
 This is a Home Assistant add-on repository containing custom add-ons for Home Assistant installations. Follow these guidelines when assisting with code generation, modifications, or suggestions.
 
+## Official Documentation
+Always refer to the official Home Assistant add-on documentation:
+- **Main Documentation**: https://developers.home-assistant.io/docs/add-ons
+- **Ingress Requirements**: https://developers.home-assistant.io/docs/add-ons/presentation/#ingress
+- **Configuration Options**: https://developers.home-assistant.io/docs/add-ons/configuration
+
 ## Home Assistant Add-on Development Guidelines
 
 ### Repository Structure
