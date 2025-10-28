@@ -31,9 +31,16 @@ if [ ! -f /data/icloud_session_configured ]; then
     bashio::log.info "  2. Enter your 2FA code when prompted"
     bashio::log.info "  3. Restart this add-on after authentication"
     bashio::log.info ""
+    bashio::log.info "Starting web interface..."
     
-    # Start the web setup interface
-    python3 /setup_server.py &
+    # Start the web setup interface with proper error handling
+    python3 /setup_server.py 2>&1 | while IFS= read -r line; do
+        bashio::log.info "$line"
+    done &
+    
+    # Wait a moment for server to start
+    sleep 2
+    bashio::log.info "Web UI should now be accessible via 'OPEN WEB UI' button"
     
     # Keep running to allow web setup
     tail -f /dev/null

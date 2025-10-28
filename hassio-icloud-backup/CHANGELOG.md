@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.2.2] - 2025-10-28
+
+### Fixed
+- Fix Ingress 503 error
+- Simplify route handling for Ingress support
+- Add proper Flask threading and reloader settings
+- Better logging of web server startup
+- Remove redundant path handling
+
 ## [3.2.1] - 2025-10-28
 
 ### Changed

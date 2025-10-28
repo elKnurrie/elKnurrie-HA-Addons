@@ -136,8 +136,6 @@ HTML_TEMPLATE = """
     </div>
     
     <script>
-        const INGRESS_PATH = '{{ ingress_path }}';
-        
         document.getElementById('setupForm').onsubmit = async (e) => {
             e.preventDefault();
             const code = document.getElementById('twofa_code').value;
@@ -149,7 +147,7 @@ HTML_TEMPLATE = """
             statusDiv.innerHTML = '<div class="status info">⏳ Connecting to iCloud...</div>';
             
             try {
-                const response = await fetch(INGRESS_PATH + '/setup', {
+                const response = await fetch('/setup', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({twofa_code: code})
@@ -185,17 +183,15 @@ def load_config():
         return json.load(f)
 
 @app.route('/')
-@app.route(f'{INGRESS_PATH}/')
 def index():
     config = load_config()
     return render_template_string(
         HTML_TEMPLATE, 
         username=config.get('icloud_username', ''),
-        ingress_path=INGRESS_PATH
+        ingress_path=''  # Ingress handles the path automatically
     )
 
 @app.route('/setup', methods=['POST'])
-@app.route(f'{INGRESS_PATH}/setup', methods=['POST'])
 def setup():
     data = request.json
     twofa_code = data.get('twofa_code', '')
@@ -218,7 +214,12 @@ def setup():
 if __name__ == '__main__':
     port = int(os.environ.get('INGRESS_PORT', 8099))
     print(f"[INFO] Starting iCloud Setup Web Interface on port {port}")
+    print(f"[INFO] Binding to 0.0.0.0:{port}")
     if INGRESS_PATH:
         print(f"[INFO] Running with Home Assistant Ingress support")
         print(f"[INFO] Ingress path: {INGRESS_PATH}")
-    app.run(host='0.0.0.0', port=port, debug=False)
+    else:
+        print(f"[INFO] Running in standalone mode")
+    
+    # Run with threaded=True for better Ingress support
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True, use_reloader=False)
