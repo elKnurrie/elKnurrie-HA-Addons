@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.0.4] - 2025-10-28
+
+### Fixed
+- Fix Docker build: Install pytz via pip (py3-pytz doesn't exist in Alpine)
+- Remove non-existent py3-pytz package from apk
+
 ## [2.0.3] - 2025-10-28
 
 ### Fixed
