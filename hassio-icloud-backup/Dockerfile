@@ -1,15 +1,20 @@
-ARG BUILD_FROM=ghcr.io/home-assistant/base:latest
+ARG BUILD_FROM
 FROM $BUILD_FROM
 
-ENV LANG C.UTF-8
+# Install packages and dependencies
+RUN \
+    apk add --no-cache \
+        curl \
+        bash \
+        jq \
+        py3-yaml \
+        python3 \
+        fuse \
+        ca-certificates \
+    && curl https://rclone.org/install.sh | bash
 
-RUN apk add --no-cache curl bash py3-pip jq
-RUN pip3 install --no-cache-dir pyyaml
-
-# Install rclone
-RUN curl https://rclone.org/install.sh | bash
-
-COPY run.sh /run.sh
+# Copy data for add-on
+COPY run.sh /
 RUN chmod a+x /run.sh
 
 CMD [ "/run.sh" ]
