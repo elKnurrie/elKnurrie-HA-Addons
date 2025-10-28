@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6] - 2025-10-28
+
+### Fixed
+- Use explicit public DNS servers (Google DNS, Cloudflare)
+- Disable host_network and use container networking with custom DNS
+- Fixes persistent DNS resolution issues
+
 ## [1.0.5] - 2025-10-28
 
 ### Fixed
