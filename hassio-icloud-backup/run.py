@@ -10,13 +10,23 @@ import logging
 from pathlib import Path
 from datetime import datetime, timedelta
 
+# Fix for Python 3.12 - add imp module workaround
 try:
-    from pyicloud import PyiCloudService
-    from pyicloud.exceptions import PyiCloudFailedLoginException, PyiCloud2SARequiredError
+    import imp
 except ImportError:
-    # Try alternative import
+    # Python 3.12+ removed imp module, provide a dummy for compatibility
+    import importlib
+    import importlib.util
+    sys.modules['imp'] = type(sys)('imp')
+    sys.modules['imp'].find_module = lambda name: importlib.util.find_spec(name)
+
+try:
     from pyicloud_ipd import PyiCloudService
     from pyicloud_ipd.exceptions import PyiCloudFailedLoginException, PyiCloud2SARequiredError
+except ImportError as e:
+    print(f"Failed to import pyicloud_ipd: {e}")
+    print("This might be a dependency issue. Installing required packages...")
+    sys.exit(1)
 
 # Configure logging
 logging.basicConfig(

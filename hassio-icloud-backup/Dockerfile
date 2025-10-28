@@ -9,10 +9,12 @@ RUN \
         py3-requests \
         py3-six \
         py3-tzlocal \
+        py3-pytz \
         bash \
         jq \
     && pip3 install --break-system-packages \
-        pyicloud-ipd
+        pyicloud-ipd \
+        setuptools
 
 # Copy data for add-on
 COPY run.py /

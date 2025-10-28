@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.3] - 2025-10-28
+
+### Fixed
+- Fix Python 3.12 compatibility (imp module removed in 3.12)
+- Add setuptools dependency
+- Add imp module workaround for pyicloud-ipd
+- Install py3-pytz for timezone support
+
 ## [2.0.2] - 2025-10-28
 
 ### Changed
