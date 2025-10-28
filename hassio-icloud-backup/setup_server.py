@@ -368,8 +368,18 @@ def request_code():
         # Create rclone config directory
         os.makedirs('/root/.config/rclone', exist_ok=True)
         
-        # Create initial config
-        obscured_pass = subprocess.check_output(['rclone', 'obscure', password]).decode().strip()
+        # Create initial config - use rclone obscure command properly
+        try:
+            obscure_result = subprocess.run(
+                ['rclone', 'obscure', password],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            obscured_pass = obscure_result.stdout.strip()
+        except subprocess.CalledProcessError as e:
+            print(f"[ERROR] Failed to obscure password: {e}")
+            return jsonify({'success': False, 'message': 'Failed to prepare configuration'})
         
         config_content = f"""[icloud]
 type = iclouddrive
@@ -398,7 +408,6 @@ pass = {obscured_pass}
         auth_state['message'] = 'Waiting for 2FA code from user'
         
         # Wait a moment to ensure connection started
-        import time
         time.sleep(3)
         
         print("[INFO] Connection initiated - Apple should send 2FA code now")

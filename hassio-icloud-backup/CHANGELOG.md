@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.1] - 2025-10-28
+
+### Fixed
+- Fix JSON syntax error in request_code endpoint
+- Better error handling for rclone obscure command
+- Use subprocess.run() instead of check_output() for cleaner output
+- Proper exception handling for configuration preparation
+
 ## [3.5.0] - 2025-10-28
 
 ### Added
