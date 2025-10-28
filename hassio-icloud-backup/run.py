@@ -32,27 +32,52 @@ def load_config():
 def authenticate_icloud(username, password):
     """Authenticate with iCloud"""
     logger.info("Authenticating with iCloud...")
+    logger.info(f"Using Apple ID: {username}")
+    
     try:
-        api = PyiCloudService(username, password)
+        # Use a persistent cookie directory
+        cookie_dir = '/data'
+        
+        api = PyiCloudService(
+            username, 
+            password,
+            cookie_directory=cookie_dir
+        )
         
         # Check if 2FA is required
         if api.requires_2fa:
             logger.error("Two-factor authentication is required!")
             logger.error("Unfortunately, this add-on doesn't support interactive 2FA yet.")
-            logger.info("You need to:")
-            logger.info("1. Authenticate once on a device with pyicloud")
-            logger.info("2. Save the session token")
-            logger.info("OR disable 2FA temporarily (not recommended)")
+            logger.info("")
+            logger.info("Solutions:")
+            logger.info("1. Make sure you're using an APP-SPECIFIC PASSWORD (not your regular password)")
+            logger.info("   Generate one at: https://appleid.apple.com/account/manage → Security → App-Specific Passwords")
+            logger.info("2. The password format should be: xxxx-xxxx-xxxx-xxxx")
+            logger.info("")
             sys.exit(1)
         
         logger.info("Successfully authenticated with iCloud!")
         return api
+        
     except PyiCloudFailedLoginException as e:
         logger.error(f"Failed to login to iCloud: {e}")
-        logger.error("Please verify your Apple ID and app-specific password")
+        logger.error("")
+        logger.error("Common causes:")
+        logger.error("1. Using regular Apple ID password instead of app-specific password")
+        logger.error("2. App-specific password is incorrect or expired")
+        logger.error("3. Two-factor authentication issues")
+        logger.error("")
+        logger.error("To fix:")
+        logger.error("- Go to https://appleid.apple.com/account/manage")
+        logger.error("- Navigate to Security → App-Specific Passwords")
+        logger.error("- Generate a NEW password for 'Home Assistant'")
+        logger.error("- Use that password (format: xxxx-xxxx-xxxx-xxxx)")
         sys.exit(1)
     except Exception as e:
         logger.error(f"iCloud authentication error: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
         sys.exit(1)
 
 def get_or_create_folder(drive, folder_name):

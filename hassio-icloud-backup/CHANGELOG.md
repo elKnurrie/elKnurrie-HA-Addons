@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.0.1] - 2025-10-28
+
+### Fixed
+- Improved authentication error messages
+- Added cookie directory persistence for iCloud sessions
+- Better debugging information for login failures
+- More detailed troubleshooting steps
+
+### Changed
+- Enhanced error messages to guide users to app-specific password setup
+- Added explicit instructions for common authentication issues
+
 ## [2.0.0] - 2025-10-28
 
 ### Breaking Changes
