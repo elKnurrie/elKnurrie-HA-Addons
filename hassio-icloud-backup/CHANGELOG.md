@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.5] - 2025-10-28
+
+### Fixed
+- Enable host_network to fix DNS resolution issues
+- Resolves "no such host" error when connecting to iCloud WebDAV
+
 ## [1.0.4] - 2025-10-28
 
 ### Fixed
