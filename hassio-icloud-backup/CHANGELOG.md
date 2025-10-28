@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.0.2] - 2025-10-28
+
+### Changed
+- Switch to pyicloud-ipd (actively maintained fork)
+- Add support for PyiCloud2SARequiredError exception
+- Verify iCloud Drive access after authentication
+- Enhanced error messages with step-by-step troubleshooting
+- Better handling of 2FA and app-specific password requirements
+
+### Fixed
+- Improved library compatibility with fallback imports
+- Added explicit iCloud Drive access verification
+
 ## [2.0.1] - 2025-10-28
 
 ### Fixed

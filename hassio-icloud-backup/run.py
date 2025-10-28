@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Home Assistant iCloud Backup Add-on
-Uploads Home Assistant backups to iCloud Drive using PyiCloud
+Uploads Home Assistant backups to iCloud Drive using PyiCloud-ipd (maintained fork)
 """
 import os
 import sys
@@ -9,8 +9,14 @@ import json
 import logging
 from pathlib import Path
 from datetime import datetime, timedelta
-from pyicloud import PyiCloudService
-from pyicloud.exceptions import PyiCloudFailedLoginException
+
+try:
+    from pyicloud import PyiCloudService
+    from pyicloud.exceptions import PyiCloudFailedLoginException, PyiCloud2SARequiredError
+except ImportError:
+    # Try alternative import
+    from pyicloud_ipd import PyiCloudService
+    from pyicloud_ipd.exceptions import PyiCloudFailedLoginException, PyiCloud2SARequiredError
 
 # Configure logging
 logging.basicConfig(
@@ -38,41 +44,72 @@ def authenticate_icloud(username, password):
         # Use a persistent cookie directory
         cookie_dir = '/data'
         
+        # Try to authenticate
         api = PyiCloudService(
             username, 
             password,
-            cookie_directory=cookie_dir
+            cookie_directory=cookie_dir,
+            verify=True
         )
         
         # Check if 2FA is required
         if api.requires_2fa:
-            logger.error("Two-factor authentication is required!")
-            logger.error("Unfortunately, this add-on doesn't support interactive 2FA yet.")
-            logger.info("")
-            logger.info("Solutions:")
-            logger.info("1. Make sure you're using an APP-SPECIFIC PASSWORD (not your regular password)")
-            logger.info("   Generate one at: https://appleid.apple.com/account/manage → Security → App-Specific Passwords")
-            logger.info("2. The password format should be: xxxx-xxxx-xxxx-xxxx")
-            logger.info("")
+            logger.error("Two-factor authentication code is required!")
+            logger.error("")
+            logger.error("This add-on cannot handle interactive 2FA prompts.")
+            logger.error("")
+            logger.error("IMPORTANT: You must use an app-specific password!")
+            logger.error("Regular Apple ID passwords won't work.")
+            logger.error("")
+            logger.error("Steps to generate app-specific password:")
+            logger.error("1. Go to: https://appleid.apple.com/account/manage")
+            logger.error("2. Click 'Security'")
+            logger.error("3. Under 'App-Specific Passwords', click 'Generate Password'")
+            logger.error("4. Label it 'Home Assistant'")
+            logger.error("5. Copy the password (format: xxxx-xxxx-xxxx-xxxx)")
+            logger.error("6. Use that in this add-on (not your regular password)")
+            logger.error("")
             sys.exit(1)
         
-        logger.info("Successfully authenticated with iCloud!")
+        # Verify we can access drive
+        try:
+            _ = api.drive
+            logger.info("Successfully authenticated and accessed iCloud Drive!")
+        except Exception as drive_error:
+            logger.error(f"Authenticated but cannot access iCloud Drive: {drive_error}")
+            logger.error("Make sure iCloud Drive is enabled in your iCloud settings")
+            sys.exit(1)
+            
         return api
+        
+    except PyiCloud2SARequiredError:
+        logger.error("Two-Step Authentication is required but cannot be completed automatically")
+        logger.error("You MUST use an app-specific password instead of your regular password")
+        logger.error("Generate one at: https://appleid.apple.com/account/manage")
+        sys.exit(1)
         
     except PyiCloudFailedLoginException as e:
         logger.error(f"Failed to login to iCloud: {e}")
         logger.error("")
-        logger.error("Common causes:")
-        logger.error("1. Using regular Apple ID password instead of app-specific password")
-        logger.error("2. App-specific password is incorrect or expired")
-        logger.error("3. Two-factor authentication issues")
+        logger.error("Troubleshooting:")
         logger.error("")
-        logger.error("To fix:")
-        logger.error("- Go to https://appleid.apple.com/account/manage")
-        logger.error("- Navigate to Security → App-Specific Passwords")
-        logger.error("- Generate a NEW password for 'Home Assistant'")
-        logger.error("- Use that password (format: xxxx-xxxx-xxxx-xxxx)")
+        logger.error("1. VERIFY you're using an APP-SPECIFIC password")
+        logger.error("   (NOT your regular Apple ID password)")
+        logger.error("")
+        logger.error("2. Check if your app-specific password is still valid")
+        logger.error("   (They can expire or be revoked)")
+        logger.error("")
+        logger.error("3. Generate a NEW app-specific password:")
+        logger.error("   - Go to https://appleid.apple.com/account/manage")
+        logger.error("   - Security → App-Specific Passwords")
+        logger.error("   - Generate new password")
+        logger.error("   - Use format: xxxx-xxxx-xxxx-xxxx (with dashes)")
+        logger.error("")
+        logger.error("4. Verify your Apple ID email is correct")
+        logger.error(f"   Currently using: {username}")
+        logger.error("")
         sys.exit(1)
+        
     except Exception as e:
         logger.error(f"iCloud authentication error: {e}")
         logger.error(f"Error type: {type(e).__name__}")
