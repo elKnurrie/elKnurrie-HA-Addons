@@ -19,6 +19,27 @@ if [ -z "$ICLOUD_USERNAME" ] || [ -z "$ICLOUD_PASSWORD" ]; then
     exit 1
 fi
 
+# Fix DNS resolution by adding to /etc/hosts as workaround
+bashio::log.info "Setting up DNS workaround for iCloud WebDAV..."
+if ! grep -q "webdav.icloud.com" /etc/hosts 2>/dev/null; then
+    # Resolve using public DNS and add to hosts file
+    ICLOUD_IP=$(nslookup webdav.icloud.com 8.8.8.8 | grep -A1 "Name:" | tail -n1 | awk '{print $2}' || echo "")
+    if [ -z "$ICLOUD_IP" ]; then
+        bashio::log.warning "Could not resolve webdav.icloud.com via DNS, trying alternative method..."
+        # Try with getent
+        ICLOUD_IP=$(getent hosts webdav.icloud.com | awk '{print $1}' || echo "")
+    fi
+    
+    if [ -n "$ICLOUD_IP" ]; then
+        bashio::log.info "Adding webdav.icloud.com ($ICLOUD_IP) to /etc/hosts"
+        echo "$ICLOUD_IP webdav.icloud.com" >> /etc/hosts
+    else
+        bashio::log.error "Failed to resolve webdav.icloud.com"
+        bashio::log.info "Your Home Assistant may have network/DNS issues."
+        exit 1
+    fi
+fi
+
 mkdir -p "$BACKUP_DESTINATION"
 
 # Configure rclone remote

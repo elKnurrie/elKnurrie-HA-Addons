@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.7] - 2025-10-28
+
+### Fixed
+- Add DNS workaround: manually resolve and add to /etc/hosts
+- Install bind-tools (nslookup) for DNS resolution
+- Use Google DNS (8.8.8.8) to resolve iCloud hostname
+- Bypass Docker's internal DNS issues
+
 ## [1.0.6] - 2025-10-28
 
 ### Fixed
