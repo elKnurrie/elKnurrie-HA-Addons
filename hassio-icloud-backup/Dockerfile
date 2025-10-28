@@ -4,23 +4,16 @@ FROM $BUILD_FROM
 # Install packages and dependencies
 RUN \
     apk add --no-cache \
-        curl \
+        python3 \
+        py3-pip \
+        py3-requests \
         bash \
         jq \
-        py3-yaml \
-        python3 \
-        fuse \
-        ca-certificates \
-        unzip \
-    && curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip \
-    && unzip -o rclone-current-linux-amd64.zip \
-    && cd rclone-*-linux-amd64 \
-    && cp rclone /usr/bin/ \
-    && chmod 755 /usr/bin/rclone \
-    && cd .. \
-    && rm -rf rclone-*
+    && pip3 install --break-system-packages \
+        pyicloud
 
 # Copy data for add-on
+COPY run.py /
 COPY run.sh /
 RUN chmod a+x /run.sh
 

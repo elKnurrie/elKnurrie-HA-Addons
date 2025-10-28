@@ -1,17 +1,35 @@
 # Changelog
 
+## [2.0.0] - 2025-10-28
+
+### Breaking Changes
+- **Complete rewrite**: Now uses PyiCloud library instead of rclone
+- Uses official iCloud Drive API instead of non-existent WebDAV endpoint
+- Configuration options changed (removed `icloud_webdav_url` and `backup_destination`)
+
+### Added
+- Native iCloud Drive API support via pyicloud
+- Proper folder management in iCloud Drive
+- Better error messages and logging
+- Direct file upload without WebDAV
+
+### Fixed
+- Fixed fundamental issue: iCloud doesn't support WebDAV for iCloud Drive
+- Removed dependency on DNS resolution of non-existent webdav.icloud.com
+- No longer requires FUSE or privileged access
+
+### Removed
+- Removed rclone dependency
+- Removed WebDAV configuration
+- Removed FUSE mounting
+- Removed unnecessary system packages
+
+### Notes
+- Requires app-specific password from appleid.apple.com
+- PyiCloud doesn't support interactive 2FA prompts
+- Uploads happen once when add-on starts
+
 ## [1.0.8] - 2025-10-28
-
-### Changed
-- Simplified DNS handling - removed workarounds
-- Improved error messages to indicate DNS issues in Home Assistant
-- Removed bind-tools dependency
-- Removed host_network and dns settings
-
-### Note
-If you're experiencing DNS issues, this indicates a network configuration problem in your Home Assistant installation. Check Settings → System → Network for DNS settings.
-
-## [1.0.7] - 2025-10-28
 
 ### Fixed
 - Add DNS workaround: manually resolve and add to /etc/hosts

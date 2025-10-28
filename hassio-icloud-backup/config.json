@@ -1,32 +1,28 @@
 {
   "name": "Home Assistant iCloud Backup",
-  "version": "1.0.8",
+  "version": "2.0.0",
   "slug": "hassio-icloud-backup",
-  "description": "Backup Home Assistant snapshots to iCloud using rclone and WebDAV",
+  "description": "Backup Home Assistant snapshots to iCloud Drive using the iCloud API",
   "url": "https://github.com/elKnurrie/elKnurrie-HA-Addons",
   "arch": ["amd64", "armv7", "aarch64"],
   "startup": "application",
   "boot": "auto",
   "init": false,
-  "privileged": ["SYS_ADMIN"],
-  "devices": ["/dev/fuse"],
-  "map": ["config:ro", "backup:ro"],
+  "map": ["backup:ro"],
   "ports": {},
   "ports_description": {},
   "options": {
-    "icloud_webdav_url": "https://webdav.icloud.com",
     "icloud_username": "",
     "icloud_password": "",
     "backup_source": "/backup",
-    "backup_destination": "/mnt/icloud",
+    "icloud_folder": "HomeAssistantBackups",
     "retention_days": 14
   },
   "schema": {
-    "icloud_webdav_url": "str",
     "icloud_username": "str",
     "icloud_password": "str",
     "backup_source": "str",
-    "backup_destination": "str",
+    "icloud_folder": "str",
     "retention_days": "int"
   }
 }
