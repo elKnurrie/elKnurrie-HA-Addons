@@ -1,6 +1,6 @@
 {
   "name": "Home Assistant iCloud Backup",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "slug": "hassio-icloud-backup",
   "description": "Backup Home Assistant snapshots to iCloud Drive using rclone",
   "url": "https://github.com/elKnurrie/elKnurrie-HA-Addons",
@@ -9,11 +9,17 @@
   "boot": "auto",
   "init": false,
   "map": ["backup:ro"],
-  "ports": {},
-  "ports_description": {},
+  "ports": {
+    "8099/tcp": 8099
+  },
+  "ports_description": {
+    "8099/tcp": "Web UI for iCloud setup"
+  },
+  "webui": "http://[HOST]:[PORT:8099]",
   "options": {
     "icloud_username": "",
     "icloud_password": "",
+    "icloud_2fa_code": "",
     "backup_source": "/backup",
     "icloud_folder": "HomeAssistantBackups",
     "retention_days": 14
@@ -21,6 +27,7 @@
   "schema": {
     "icloud_username": "str",
     "icloud_password": "password",
+    "icloud_2fa_code": "str?",
     "backup_source": "str",
     "icloud_folder": "str",
     "retention_days": "int"

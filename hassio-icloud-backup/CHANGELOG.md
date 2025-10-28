@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.2.0] - 2025-10-28
+
+### Added
+- Web UI for 2FA authentication setup (no terminal needed!)
+- Click "OPEN WEB UI" button to enter 2FA code
+- Session token persistence for future runs
+- Automatic authentication flow
+
+### Changed
+- No longer requires terminal access
+- Web-based setup wizard
+- Clear instructions in logs
+
+### How to Use
+1. Install and start add-on
+2. Click "OPEN WEB UI" button
+3. Enter your 2FA code
+4. Restart add-on - done!
+
 ## [3.1.0] - 2025-10-28
 
 ### ✅ WORKING SOLUTION!
