@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.8] - 2025-10-28
+
+### Changed
+- Simplified DNS handling - removed workarounds
+- Improved error messages to indicate DNS issues in Home Assistant
+- Removed bind-tools dependency
+- Removed host_network and dns settings
+
+### Note
+If you're experiencing DNS issues, this indicates a network configuration problem in your Home Assistant installation. Check Settings → System → Network for DNS settings.
+
 ## [1.0.7] - 2025-10-28
 
 ### Fixed

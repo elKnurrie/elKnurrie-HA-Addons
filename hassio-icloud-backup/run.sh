@@ -19,27 +19,6 @@ if [ -z "$ICLOUD_USERNAME" ] || [ -z "$ICLOUD_PASSWORD" ]; then
     exit 1
 fi
 
-# Fix DNS resolution by adding to /etc/hosts as workaround
-bashio::log.info "Setting up DNS workaround for iCloud WebDAV..."
-if ! grep -q "webdav.icloud.com" /etc/hosts 2>/dev/null; then
-    # Resolve using public DNS and add to hosts file
-    ICLOUD_IP=$(nslookup webdav.icloud.com 8.8.8.8 | grep -A1 "Name:" | tail -n1 | awk '{print $2}' || echo "")
-    if [ -z "$ICLOUD_IP" ]; then
-        bashio::log.warning "Could not resolve webdav.icloud.com via DNS, trying alternative method..."
-        # Try with getent
-        ICLOUD_IP=$(getent hosts webdav.icloud.com | awk '{print $1}' || echo "")
-    fi
-    
-    if [ -n "$ICLOUD_IP" ]; then
-        bashio::log.info "Adding webdav.icloud.com ($ICLOUD_IP) to /etc/hosts"
-        echo "$ICLOUD_IP webdav.icloud.com" >> /etc/hosts
-    else
-        bashio::log.error "Failed to resolve webdav.icloud.com"
-        bashio::log.info "Your Home Assistant may have network/DNS issues."
-        exit 1
-    fi
-fi
-
 mkdir -p "$BACKUP_DESTINATION"
 
 # Configure rclone remote
@@ -50,7 +29,6 @@ mkdir -p /root/.config/rclone
 OBSCURED_PASSWORD=$(rclone obscure "$ICLOUD_PASSWORD")
 
 # Create rclone config (no indentation, proper format)
-# Note: iCloud WebDAV vendor should be "other" and we need to ensure proper URL
 cat > /root/.config/rclone/rclone.conf <<EOF
 [icloud]
 type = webdav
@@ -61,20 +39,18 @@ pass = $OBSCURED_PASSWORD
 EOF
 
 bashio::log.info "Testing iCloud connection..."
-bashio::log.info "Using WebDAV URL: $ICLOUD_WEBDAV_URL"
-bashio::log.info "Username: $ICLOUD_USERNAME"
 
-# Test with more verbose output
+# Test connection
 if ! rclone lsd icloud: --max-depth 1 --verbose 2>&1 | tee /tmp/rclone-debug.log; then
     bashio::log.error "Failed to connect to iCloud WebDAV."
     bashio::log.error "Debug output:"
     cat /tmp/rclone-debug.log || true
     bashio::log.info ""
-    bashio::log.info "Troubleshooting steps:"
-    bashio::log.info "1. Verify you're using an app-specific password from https://appleid.apple.com"
-    bashio::log.info "2. Make sure 2-factor authentication is enabled"
-    bashio::log.info "3. Check that iCloud Drive is enabled in your iCloud settings"
-    bashio::log.info "4. Verify the password is entered without spaces or dashes"
+    bashio::log.info "Troubleshooting:"
+    bashio::log.info "1. Use an app-specific password from https://appleid.apple.com"
+    bashio::log.info "2. Enable 2-factor authentication"
+    bashio::log.info "3. Enable iCloud Drive in your iCloud settings"
+    bashio::log.info "4. Your Home Assistant has DNS issues - check Settings → System → Network"
     exit 1
 fi
 
