@@ -3,7 +3,7 @@
 Web-based setup interface for iCloud 2FA authentication
 Supports Home Assistant Ingress
 """
-from flask import Flask, render_template_string, request, jsonify
+from flask import Flask, render_template_string, request, jsonify, abort
 import json
 import os
 
@@ -11,6 +11,16 @@ app = Flask(__name__)
 
 # Get ingress path from environment (if running under HA ingress)
 INGRESS_PATH = os.environ.get('INGRESS_PATH', '')
+
+# Ingress security: Only allow connections from Home Assistant ingress gateway
+ALLOWED_IP = '172.30.32.2'
+
+@app.before_request
+def limit_remote_addr():
+    """Ensure requests only come from Home Assistant Ingress gateway"""
+    if request.remote_addr != ALLOWED_IP:
+        app.logger.warning(f"Rejected request from {request.remote_addr}")
+        abort(403)  # Forbidden
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>

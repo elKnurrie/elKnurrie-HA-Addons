@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.2.3] - 2025-10-28
+
+### Fixed
+- Add IP whitelist security for Ingress (required: 172.30.32.2 only)
+- Implement proper Ingress security as per HA documentation
+- Reject all connections not from Home Assistant gateway
+
+### Security
+- Only accept connections from Home Assistant Ingress gateway IP
+
 ## [3.2.2] - 2025-10-28
 
 ### Fixed
