@@ -259,7 +259,7 @@ def load_config():
 def authenticate_with_rclone(username, password, twofa_code):
     """Actually run rclone authentication with 2FA code"""
     try:
-        print(f"[INFO] Starting rclone authentication for {username}")
+        app.logger.info(f"Starting rclone authentication for {username}")
         auth_state['status'] = 'authenticating'
         auth_state['message'] = 'Initializing rclone...'
         
@@ -267,7 +267,8 @@ def authenticate_with_rclone(username, password, twofa_code):
         os.makedirs('/root/.config/rclone', exist_ok=True)
         
         # Create initial config
-        obscured_pass = subprocess.check_output(['rclone', 'obscure', password]).decode().strip()
+        obscure_result = subprocess.run(['rclone', 'obscure', password], capture_output=True, text=True, check=True)
+        obscured_pass = obscure_result.stdout.strip()
         
         config_content = f"""[icloud]
 type = iclouddrive
@@ -278,7 +279,7 @@ pass = {obscured_pass}
         with open('/root/.config/rclone/rclone.conf', 'w') as f:
             f.write(config_content)
         
-        print(f"[INFO] Config created, attempting connection...")
+        app.logger.info("Config created, attempting connection...")
         auth_state['message'] = 'Connecting to iCloud (Apple will send 2FA now)...'
         
         # Try to list iCloud Drive - this will trigger 2FA
@@ -292,7 +293,7 @@ pass = {obscured_pass}
         )
         
         # Send the 2FA code immediately
-        print(f"[INFO] Sending 2FA code: {twofa_code}")
+        app.logger.info(f"Sending 2FA code: {twofa_code}")
         proc.stdin.write(f"{twofa_code}\n")
         proc.stdin.flush()
         proc.stdin.close()
@@ -301,10 +302,10 @@ pass = {obscured_pass}
         try:
             output, _ = proc.communicate(timeout=45)
             
-            print(f"[DEBUG] rclone output:\n{output}")
+            app.logger.info(f"rclone output:\n{output}")
             
             if proc.returncode == 0 or "trust token" in output.lower():
-                print("[INFO] ✅ Authentication successful!")
+                app.logger.info("Authentication successful!")
                 auth_state['status'] = 'success'
                 auth_state['message'] = 'Authentication successful!'
                 
@@ -314,22 +315,22 @@ pass = {obscured_pass}
                 
                 return True
             else:
-                print(f"[ERROR] Authentication failed: {output}")
+                app.logger.error(f"Authentication failed: {output}")
                 auth_state['status'] = 'error'
                 auth_state['message'] = f'Authentication failed. Check your credentials and 2FA code.'
                 return False
                 
         except subprocess.TimeoutExpired:
             proc.kill()
-            print("[ERROR] Authentication timed out")
+            app.logger.error("Authentication timed out")
             auth_state['status'] = 'error'
             auth_state['message'] = 'Authentication timed out - Apple may not have sent 2FA'
             return False
             
     except Exception as e:
-        print(f"[ERROR] Exception during authentication: {e}")
+        app.logger.error(f"Exception during authentication: {e}")
         import traceback
-        traceback.print_exc()
+        app.logger.error(traceback.format_exc())
         auth_state['status'] = 'error'
         auth_state['message'] = f'Error: {str(e)}'
         return False
@@ -363,7 +364,7 @@ def request_code():
         if not username or not password:
             return jsonify({'success': False, 'message': 'Username and password not configured'})
         
-        print(f"[INFO] Triggering 2FA request for {username}")
+        app.logger.info(f"Triggering 2FA request for {username}")
         
         # Create rclone config directory
         os.makedirs('/root/.config/rclone', exist_ok=True)
@@ -378,7 +379,7 @@ def request_code():
             )
             obscured_pass = obscure_result.stdout.strip()
         except subprocess.CalledProcessError as e:
-            print(f"[ERROR] Failed to obscure password: {e}")
+            app.logger.error(f"Failed to obscure password: {e}")
             return jsonify({'success': False, 'message': 'Failed to prepare configuration'})
         
         config_content = f"""[icloud]
@@ -390,7 +391,7 @@ pass = {obscured_pass}
         with open('/root/.config/rclone/rclone.conf', 'w') as f:
             f.write(config_content)
         
-        print("[INFO] Config created, initiating connection to trigger 2FA...")
+        app.logger.info("Config created, initiating connection to trigger 2FA...")
         
         # Start rclone connection in background - this will trigger Apple to send 2FA
         # We don't wait for it to complete, just start it
@@ -410,7 +411,7 @@ pass = {obscured_pass}
         # Wait a moment to ensure connection started
         time.sleep(3)
         
-        print("[INFO] Connection initiated - Apple should send 2FA code now")
+        app.logger.info("Connection initiated - Apple should send 2FA code now")
         
         return jsonify({
             'success': True,
@@ -418,9 +419,9 @@ pass = {obscured_pass}
         })
         
     except Exception as e:
-        print(f"[ERROR] Failed to request 2FA: {e}")
+        app.logger.error(f"Failed to request 2FA: {e}")
         import traceback
-        traceback.print_exc()
+        app.logger.error(traceback.format_exc())
         return jsonify({
             'success': False,
             'message': f'Error: {str(e)}'
@@ -440,7 +441,7 @@ def setup():
         return jsonify({'success': False, 'message': 'No authentication process waiting. Click "Request 2FA Code" first.'})
     
     try:
-        print(f"[INFO] Sending 2FA code to rclone: {twofa_code}")
+        app.logger.info(f"Sending 2FA code to rclone: {twofa_code}")
         auth_state['status'] = 'authenticating'
         auth_state['message'] = 'Verifying 2FA code...'
         
@@ -453,10 +454,10 @@ def setup():
         try:
             output, _ = proc.communicate(timeout=30)
             
-            print(f"[DEBUG] rclone output:\n{output}")
+            app.logger.info(f"rclone output:\n{output}")
             
             if proc.returncode == 0 or "success" in output.lower() or not ("error" in output.lower() or "failed" in output.lower()):
-                print("[INFO] ✅ Authentication successful!")
+                app.logger.info("Authentication successful!")
                 auth_state['status'] = 'success'
                 auth_state['message'] = 'Authentication successful!'
                 auth_state['process'] = None
@@ -471,7 +472,7 @@ def setup():
                     'message': f'Successfully authenticated! Session saved for {config.get("icloud_username", "")}.'
                 })
             else:
-                print(f"[ERROR] Authentication failed: {output}")
+                app.logger.error(f"Authentication failed: {output}")
                 auth_state['status'] = 'error'
                 auth_state['message'] = 'Invalid 2FA code or authentication failed'
                 auth_state['process'] = None
@@ -482,7 +483,7 @@ def setup():
                 
         except subprocess.TimeoutExpired:
             proc.kill()
-            print("[ERROR] Authentication timed out")
+            app.logger.error("Authentication timed out")
             auth_state['status'] = 'error'
             auth_state['message'] = 'Authentication timed out'
             auth_state['process'] = None
@@ -492,9 +493,9 @@ def setup():
             })
             
     except Exception as e:
-        print(f"[ERROR] Exception during authentication: {e}")
+        app.logger.error(f"Exception during authentication: {e}")
         import traceback
-        traceback.print_exc()
+        app.logger.error(traceback.format_exc())
         auth_state['status'] = 'error'
         auth_state['message'] = f'Error: {str(e)}'
         auth_state['process'] = None
@@ -505,15 +506,15 @@ def setup():
 
 if __name__ == '__main__':
     port = int(os.environ.get('INGRESS_PORT', 8099))
-    print(f"[INFO] Starting iCloud Setup Web Interface on port {port}")
-    print(f"[INFO] Binding to 0.0.0.0:{port}")
+    app.logger.info(f"Starting iCloud Setup Web Interface on port {port}")
+    app.logger.info(f"Binding to 0.0.0.0:{port}")
     if INGRESS_PATH:
-        print(f"[INFO] Running with Home Assistant Ingress support")
-        print(f"[INFO] Ingress path: {INGRESS_PATH}")
-        print(f"[INFO] IP restriction: Only {INGRESS_GATEWAY_IP} allowed")
+        app.logger.info(f"Running with Home Assistant Ingress support")
+        app.logger.info(f"Ingress path: {INGRESS_PATH}")
+        app.logger.info(f"IP restriction: Only {INGRESS_GATEWAY_IP} allowed")
     else:
-        print(f"[INFO] Running in standalone mode")
-        print(f"[INFO] All IPs allowed (no Ingress)")
+        app.logger.info(f"Running in standalone mode")
+        app.logger.info(f"All IPs allowed (no Ingress)")
     
     # Run with threaded=True for better Ingress support
     app.run(host='0.0.0.0', port=port, debug=False, threaded=True, use_reloader=False)

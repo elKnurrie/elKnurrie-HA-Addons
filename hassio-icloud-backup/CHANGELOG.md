@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.5.2] - 2025-10-28
+
+### Fixed
+- Replace all print() statements with app.logger
+- Prevent print output from corrupting JSON responses
+- Use Flask's proper logging system throughout
+- Clean JSON responses without stdout contamination
+
+The JSON syntax error was caused by print() statements
+mixing with the JSON response output. Now using proper
+Flask logging that doesn't interfere with HTTP responses.
+
 ## [3.5.1] - 2025-10-28
 
 ### Fixed
