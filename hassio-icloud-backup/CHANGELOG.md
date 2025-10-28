@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.0.0] - 2025-10-28
+
+### BREAKING CHANGES
+- Complete rewrite using browser automation (Selenium + Chromium)
+- Mimics web browser to access iCloud.com directly
+- This is an EXPERIMENTAL approach
+
+### Added
+- Headless Chromium browser for automation
+- Selenium WebDriver for browser control
+- Automated login to iCloud.com
+- Screenshot capture for debugging
+
+### Note
+This version tests if browser automation can bypass the API limitations.
+It will likely still hit the 2FA requirement, but this approach could work
+with session cookie persistence or other workarounds.
+
+**Status: EXPERIMENTAL** - Testing if this approach is viable.
+
 ## [2.0.6] - 2025-10-28
 
 ### Changed

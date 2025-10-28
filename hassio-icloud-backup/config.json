@@ -1,8 +1,8 @@
 {
   "name": "Home Assistant iCloud Backup",
-  "version": "2.0.6",
+  "version": "3.0.0",
   "slug": "hassio-icloud-backup",
-  "description": "Backup Home Assistant snapshots to iCloud Drive using the iCloud API",
+  "description": "Backup Home Assistant snapshots to iCloud Drive using browser automation (EXPERIMENTAL)",
   "url": "https://github.com/elKnurrie/elKnurrie-HA-Addons",
   "arch": ["amd64", "armv7", "aarch64"],
   "startup": "application",

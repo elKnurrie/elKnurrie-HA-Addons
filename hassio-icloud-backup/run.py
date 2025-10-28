@@ -1,32 +1,20 @@
 #!/usr/bin/env python3
 """
 Home Assistant iCloud Backup Add-on
-Uploads Home Assistant backups to iCloud Drive using PyiCloud-ipd (maintained fork)
+Uploads Home Assistant backups to iCloud Drive using browser automation (Selenium)
 """
 import os
 import sys
 import json
 import logging
+import time
 from pathlib import Path
-from datetime import datetime, timedelta
 
-# Fix for Python 3.12 - add imp module workaround
-try:
-    import imp
-except ImportError:
-    # Python 3.12+ removed imp module, provide a dummy for compatibility
-    import importlib
-    import importlib.util
-    sys.modules['imp'] = type(sys)('imp')
-    sys.modules['imp'].find_module = lambda name: importlib.util.find_spec(name)
-
-try:
-    from pyicloud_ipd import PyiCloudService
-    from pyicloud_ipd.exceptions import PyiCloudFailedLoginException, PyiCloud2SARequiredError
-except ImportError as e:
-    print(f"Failed to import pyicloud_ipd: {e}")
-    print("This might be a dependency issue. Installing required packages...")
-    sys.exit(1)
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 # Configure logging
 logging.basicConfig(
@@ -45,214 +33,125 @@ def load_config():
         logger.error(f"Failed to load configuration: {e}")
         sys.exit(1)
 
-def authenticate_icloud(username, password):
-    """Authenticate with iCloud"""
-    logger.info("Authenticating with iCloud...")
-    logger.info(f"Using Apple ID: {username}")
+def create_browser():
+    """Create a headless Chrome browser instance"""
+    logger.info("Initializing headless browser...")
+    
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-gpu')
+    options.add_argument('--window-size=1920,1080')
+    options.binary_location = '/usr/bin/chromium-browser'
+    
+    service = webdriver.ChromeService(executable_path='/usr/bin/chromedriver')
+    driver = webdriver.Chrome(service=service, options=options)
+    driver.set_page_load_timeout(30)
+    
+    return driver
+
+def login_to_icloud(driver, username, password):
+    """Login to iCloud.com using browser automation"""
+    logger.info("Navigating to iCloud.com...")
     
     try:
-        # Use a persistent cookie directory
-        cookie_dir = '/data'
+        driver.get("https://www.icloud.com/")
         
-        # Try to authenticate
-        api = PyiCloudService(
-            username, 
-            password,
-            cookie_directory=cookie_dir,
-            verify=True
+        # Wait for login page to load
+        logger.info("Waiting for login form...")
+        username_field = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.ID, "account_name_text_field"))
         )
         
+        # Enter username
+        logger.info(f"Entering username: {username}")
+        username_field.clear()
+        username_field.send_keys(username)
+        
+        # Click continue button
+        continue_button = driver.find_element(By.ID, "sign-in")
+        continue_button.click()
+        
+        time.sleep(2)
+        
+        # Enter password
+        logger.info("Entering password...")
+        password_field = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.ID, "password_text_field"))
+        )
+        password_field.clear()
+        password_field.send_keys(password)
+        
+        # Click sign in
+        sign_in_button = driver.find_element(By.ID, "sign-in")
+        sign_in_button.click()
+        
+        logger.info("Credentials submitted, waiting for authentication...")
+        time.sleep(5)
+        
         # Check if 2FA is required
-        if api.requires_2fa:
-            logger.error("Two-factor authentication code is required!")
-            logger.error("")
-            logger.error("This add-on cannot handle interactive 2FA prompts.")
-            logger.error("")
-            logger.error("IMPORTANT: You must use an app-specific password!")
-            logger.error("Regular Apple ID passwords won't work.")
-            logger.error("")
-            logger.error("Steps to generate app-specific password:")
-            logger.error("1. Go to: https://appleid.apple.com/account/manage")
-            logger.error("2. Click 'Security'")
-            logger.error("3. Under 'App-Specific Passwords', click 'Generate Password'")
-            logger.error("4. Label it 'Home Assistant'")
-            logger.error("5. Copy the password (format: xxxx-xxxx-xxxx-xxxx)")
-            logger.error("6. Use that in this add-on (not your regular password)")
-            logger.error("")
-            sys.exit(1)
+        if "two-factor" in driver.current_url.lower() or "verify" in driver.current_url.lower():
+            logger.error("Two-factor authentication is required!")
+            logger.error("Browser automation cannot bypass Apple's 2FA requirement.")
+            return False
         
-        # Verify we can access drive
-        try:
-            _ = api.drive
-            logger.info("Successfully authenticated and accessed iCloud Drive!")
-        except Exception as drive_error:
-            logger.error(f"Authenticated but cannot access iCloud Drive: {drive_error}")
-            logger.error("Make sure iCloud Drive is enabled in your iCloud settings")
-            sys.exit(1)
-            
-        return api
+        # Wait for iCloud dashboard
+        logger.info("Waiting for iCloud dashboard...")
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "app-icon"))
+        )
         
-    except PyiCloud2SARequiredError:
-        logger.error("Two-Step Authentication is required but cannot be completed automatically")
-        logger.error("You MUST use an app-specific password instead of your regular password")
-        logger.error("Generate one at: https://appleid.apple.com/account/manage")
-        sys.exit(1)
-        
-    except PyiCloudFailedLoginException as e:
-        logger.error(f"Failed to login to iCloud: {e}")
-        logger.error("")
-        logger.error("Troubleshooting:")
-        logger.error("")
-        logger.error("1. VERIFY you're using an APP-SPECIFIC password")
-        logger.error("   (NOT your regular Apple ID password)")
-        logger.error("")
-        logger.error("2. Check if your app-specific password is still valid")
-        logger.error("   (They can expire or be revoked)")
-        logger.error("")
-        logger.error("3. Generate a NEW app-specific password:")
-        logger.error("   - Go to https://appleid.apple.com/account/manage")
-        logger.error("   - Security → App-Specific Passwords")
-        logger.error("   - Generate new password")
-        logger.error("   - Use format: xxxx-xxxx-xxxx-xxxx (with dashes)")
-        logger.error("")
-        logger.error("4. Verify your Apple ID email is correct")
-        logger.error(f"   Currently using: {username}")
-        logger.error("")
-        sys.exit(1)
-        
-    except Exception as e:
-        logger.error(f"iCloud authentication error: {e}")
-        logger.error(f"Error type: {type(e).__name__}")
-        import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        sys.exit(1)
-
-def get_or_create_folder(drive, folder_name):
-    """Get or create a folder in iCloud Drive"""
-    try:
-        # Try to find existing folder
-        for item in drive.dir():
-            if item.name == folder_name and item.type == 'folder':
-                logger.info(f"Found existing folder: {folder_name}")
-                return item
-        
-        # Create new folder
-        logger.info(f"Creating folder: {folder_name}")
-        drive.mkdir(folder_name)
-        
-        # Return the newly created folder
-        for item in drive.dir():
-            if item.name == folder_name:
-                return item
-                
-    except Exception as e:
-        logger.error(f"Failed to access/create folder: {e}")
-        sys.exit(1)
-
-def upload_backup(drive, folder, backup_file):
-    """Upload a backup file to iCloud Drive"""
-    try:
-        filename = os.path.basename(backup_file)
-        logger.info(f"Uploading {filename} to iCloud...")
-        
-        with open(backup_file, 'rb') as f:
-            folder.upload(f, filename)
-        
-        logger.info(f"Successfully uploaded {filename}")
+        logger.info("Successfully logged in to iCloud!")
         return True
-    except Exception as e:
-        logger.error(f"Failed to upload {backup_file}: {e}")
+        
+    except TimeoutException as e:
+        logger.error(f"Timeout: {e}")
         return False
-
-def delete_old_backups(folder, retention_days):
-    """Delete backups older than retention_days"""
-    if retention_days <= 0:
-        return
-    
-    try:
-        cutoff_date = datetime.now() - timedelta(days=retention_days)
-        logger.info(f"Removing backups older than {retention_days} days...")
-        
-        deleted_count = 0
-        for item in folder.dir():
-            if item.type == 'file':
-                # Get file modification date
-                file_date = item.date_modified
-                if file_date and file_date < cutoff_date:
-                    logger.info(f"Deleting old backup: {item.name}")
-                    item.delete()
-                    deleted_count += 1
-        
-        if deleted_count > 0:
-            logger.info(f"Deleted {deleted_count} old backup(s)")
-        else:
-            logger.info("No old backups to delete")
-            
     except Exception as e:
-        logger.error(f"Error cleaning up old backups: {e}")
+        logger.error(f"Error during login: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return False
 
 def main():
     """Main function"""
-    logger.info("Starting Home Assistant iCloud Backup...")
+    logger.info("Starting iCloud Backup (Browser Automation Test)...")
     
-    # Load configuration
     config = load_config()
     username = config.get('icloud_username', '')
     password = config.get('icloud_password', '')
-    backup_source = config.get('backup_source', '/backup')
-    icloud_folder = config.get('icloud_folder', 'HomeAssistantBackups')
-    retention_days = config.get('retention_days', 14)
     
-    # Validate configuration
     if not username or not password:
         logger.error("iCloud username and password are required!")
         sys.exit(1)
     
-    # Authenticate with iCloud
-    api = authenticate_icloud(username, password)
+    driver = None
     
-    # Access iCloud Drive
-    logger.info("Accessing iCloud Drive...")
-    drive = api.drive
-    
-    # Get or create backup folder
-    backup_folder = get_or_create_folder(drive, icloud_folder)
-    
-    # Find backup files
-    backup_path = Path(backup_source)
-    if not backup_path.exists():
-        logger.error(f"Backup directory not found: {backup_source}")
+    try:
+        driver = create_browser()
+        
+        if not login_to_icloud(driver, username, password):
+            logger.error("Failed to login - likely due to 2FA requirement")
+            sys.exit(1)
+        
+        # Save screenshot
+        driver.save_screenshot('/data/icloud_success.png')
+        logger.info("Login successful! Screenshot saved.")
+        logger.info("Browser automation approach is VIABLE if 2FA can be handled!")
+        
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         sys.exit(1)
-    
-    backup_files = list(backup_path.glob('*.tar'))
-    if not backup_files:
-        logger.warning(f"No backup files found in {backup_source}")
-    else:
-        logger.info(f"Found {len(backup_files)} backup file(s)")
-        
-        # Upload each backup
-        uploaded = 0
-        for backup_file in backup_files:
-            if upload_backup(drive, backup_folder, str(backup_file)):
-                uploaded += 1
-        
-        logger.info(f"Successfully uploaded {uploaded}/{len(backup_files)} backup(s)")
-    
-    # Clean up old backups
-    delete_old_backups(backup_folder, retention_days)
-    
-    logger.info("Backup sync complete!")
-    logger.info("Add-on will continue running until stopped.")
+    finally:
+        if driver:
+            driver.quit()
 
 if __name__ == '__main__':
     try:
         main()
-        # Keep the container running
-        import time
-        while True:
-            time.sleep(3600)  # Sleep for 1 hour
+        time.sleep(3600)
     except KeyboardInterrupt:
         logger.info("Shutting down...")
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        sys.exit(1)
