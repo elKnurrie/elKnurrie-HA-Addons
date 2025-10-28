@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.2.1] - 2025-10-28
+
+### Changed
+- Enable Home Assistant Ingress support
+- Web UI now opens directly in sidebar (no port forwarding needed!)
+- Improved UI styling with better mobile support
+- Auto-focus on 2FA code input field
+- Better error messages and user guidance
+
+### Removed
+- External port exposure (now uses ingress)
+- No need for port forwarding or webui URL
+
+**Now even easier:** Just click "OPEN WEB UI" and the setup page opens in the sidebar!
+
 ## [3.2.0] - 2025-10-28
 
 ### Added
