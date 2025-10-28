@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.0.3] - 2025-10-28
+
+### Fixed
+- Fixed rclone config file format (proper INI format with [section])
+- Use rclone obscure for password encryption
+- Added connection test before syncing
+- Improved error messages and logging with bashio
+- Changed from mount to direct sync (more reliable)
+- Added validation for required credentials
+
+### Changed
+- Use `rclone sync` instead of mount for better reliability
+- Improved logging throughout the script
+- Better error handling and user feedback
+
 ## [1.0.2] - 2025-10-28
 
 ### Fixed

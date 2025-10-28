@@ -11,36 +11,54 @@ BACKUP_SOURCE=$(jq --raw-output '.backup_source' "$CONFIG_FILE")
 BACKUP_DESTINATION=$(jq --raw-output '.backup_destination' "$CONFIG_FILE")
 RETENTION_DAYS=$(jq --raw-output '.retention_days' "$CONFIG_FILE")
 
+bashio::log.info "Starting iCloud Backup add-on..."
+
+# Validate required configuration
+if [ -z "$ICLOUD_USERNAME" ] || [ -z "$ICLOUD_PASSWORD" ]; then
+    bashio::log.error "iCloud username and password are required!"
+    exit 1
+fi
+
 mkdir -p "$BACKUP_DESTINATION"
 
 # Configure rclone remote
+bashio::log.info "Configuring rclone for iCloud WebDAV..."
 mkdir -p /root/.config/rclone
-cat <<EOF > /root/.config/rclone/rclone.conf
-icloud:
-    type = webdav
-    url = $ICLOUD_WEBDAV_URL
-    vendor = other
-    user = $ICLOUD_USERNAME
-    pass = $ICLOUD_PASSWORD
+
+# Obscure the password for rclone
+OBSCURED_PASSWORD=$(rclone obscure "$ICLOUD_PASSWORD")
+
+# Create rclone config (no indentation, proper format)
+cat > /root/.config/rclone/rclone.conf <<EOF
+[icloud]
+type = webdav
+url = $ICLOUD_WEBDAV_URL
+vendor = other
+user = $ICLOUD_USERNAME
+pass = $OBSCURED_PASSWORD
 EOF
 
-# Mount iCloud (background)
-rclone mount icloud: "$BACKUP_DESTINATION" --daemon --timeout 10m --poll-interval 15s --vfs-cache-mode writes
+bashio::log.info "Testing iCloud connection..."
+if ! rclone lsd icloud: --max-depth 1 >/dev/null 2>&1; then
+    bashio::log.error "Failed to connect to iCloud. Please check your credentials."
+    bashio::log.info "Make sure you're using an app-specific password from appleid.apple.com"
+    exit 1
+fi
 
-echo "Waiting for mount to stabilize..."
-sleep 15
+bashio::log.info "iCloud connection successful!"
 
 # Sync Home Assistant backups to iCloud
-echo "Syncing from $BACKUP_SOURCE to iCloud backup folder"
-rclone copy "$BACKUP_SOURCE" icloud:backup-home-assistant-backups --verbose
+bashio::log.info "Syncing backups from $BACKUP_SOURCE to iCloud..."
+rclone sync "$BACKUP_SOURCE" icloud:backup-home-assistant --create-empty-src-dirs --verbose
 
 # Remove old backups from iCloud
 if [ "$RETENTION_DAYS" -gt 0 ]; then
-  echo "Removing backups older than $RETENTION_DAYS days on iCloud"
-  rclone delete --min-age ${RETENTION_DAYS}d icloud:backup-home-assistant-backups
+    bashio::log.info "Removing backups older than $RETENTION_DAYS days from iCloud..."
+    rclone delete --min-age ${RETENTION_DAYS}d icloud:backup-home-assistant --verbose
 fi
 
-echo "Backup sync complete. Add-on will now wait."
+bashio::log.info "Backup sync complete!"
+bashio::log.info "Add-on will continue running and sync on restart."
 
 # Keep addon running
 tail -f /dev/null
