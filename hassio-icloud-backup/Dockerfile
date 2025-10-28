@@ -11,7 +11,14 @@ RUN \
         python3 \
         fuse \
         ca-certificates \
-    && curl https://rclone.org/install.sh | bash
+        unzip \
+    && curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip \
+    && unzip -o rclone-current-linux-amd64.zip \
+    && cd rclone-*-linux-amd64 \
+    && cp rclone /usr/bin/ \
+    && chmod 755 /usr/bin/rclone \
+    && cd .. \
+    && rm -rf rclone-*
 
 # Copy data for add-on
 COPY run.sh /

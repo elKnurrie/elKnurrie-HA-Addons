@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2] - 2025-10-28
+
+### Fixed
+- Fixed rclone installation to use direct download instead of install script
+- Added unzip package for rclone installation
+- Fixed BusyBox unzip compatibility issue
+
 ## [1.0.1] - 2025-10-28
 
 ### Fixed
