@@ -362,7 +362,9 @@ def request_code():
         password = config.get('icloud_password', '')
         
         if not username or not password:
-            return jsonify({'success': False, 'message': 'Username and password not configured'})
+            response = jsonify({'success': False, 'message': 'Username and password not configured'})
+            response.headers['Content-Type'] = 'application/json'
+            return response
         
         app.logger.info(f"Triggering 2FA request for {username}")
         
@@ -375,12 +377,15 @@ def request_code():
                 ['rclone', 'obscure', password],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                env=dict(os.environ, PYTHONUNBUFFERED='1')
             )
             obscured_pass = obscure_result.stdout.strip()
         except subprocess.CalledProcessError as e:
             app.logger.error(f"Failed to obscure password: {e}")
-            return jsonify({'success': False, 'message': 'Failed to prepare configuration'})
+            response = jsonify({'success': False, 'message': 'Failed to prepare configuration'})
+            response.headers['Content-Type'] = 'application/json'
+            return response
         
         config_content = f"""[icloud]
 type = iclouddrive
@@ -394,13 +399,13 @@ pass = {obscured_pass}
         app.logger.info("Config created, initiating connection to trigger 2FA...")
         
         # Start rclone connection in background - this will trigger Apple to send 2FA
-        # We don't wait for it to complete, just start it
         proc = subprocess.Popen(
             ['rclone', 'lsd', 'icloud:', '--verbose'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True
+            text=True,
+            env=dict(os.environ, PYTHONUNBUFFERED='1')
         )
         
         # Store the process so we can send the code to it later
@@ -413,19 +418,23 @@ pass = {obscured_pass}
         
         app.logger.info("Connection initiated - Apple should send 2FA code now")
         
-        return jsonify({
+        response = jsonify({
             'success': True,
             'message': '2FA request sent to Apple! Check your iPhone/iPad for the code.'
         })
+        response.headers['Content-Type'] = 'application/json'
+        return response
         
     except Exception as e:
         app.logger.error(f"Failed to request 2FA: {e}")
         import traceback
         app.logger.error(traceback.format_exc())
-        return jsonify({
+        response = jsonify({
             'success': False,
             'message': f'Error: {str(e)}'
         })
+        response.headers['Content-Type'] = 'application/json'
+        return response
 
 @app.route('/setup', methods=['POST'])
 def setup():

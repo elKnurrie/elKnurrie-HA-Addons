@@ -70,13 +70,13 @@ EOF
         bashio::log.info "Waiting for 2FA code via Web UI..."
     fi
     
-    # Start the web setup interface with proper error handling
-    python3 /setup_server.py 2>&1 | while IFS= read -r line; do
-        bashio::log.info "$line"
-    done &
+    # Start the web setup interface
+    # Don't pipe output - let Flask handle its own logging
+    bashio::log.info "Starting web interface..."
+    python3 /setup_server.py > /dev/null 2>&1 &
     
     # Wait a moment for server to start
-    sleep 2
+    sleep 3
     bashio::log.info "Web UI should now be accessible via 'OPEN WEB UI' button"
     
     # Keep running to allow web setup

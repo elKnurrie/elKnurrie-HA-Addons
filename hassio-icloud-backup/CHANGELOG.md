@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.5.3] - 2025-10-29
+
+### Fixed
+- **CRITICAL FIX**: Stop piping Flask output through bashio
+- Flask server now runs independently without output redirection
+- Prevents stdout/stderr from contaminating HTTP responses
+- Add explicit Content-Type headers to all JSON responses
+- Redirect Flask output to /dev/null to prevent interference
+
+The issue: run.sh was piping Flask's output through bashio::log,
+which was mixing with HTTP responses and breaking JSON.
+
 ## [3.5.2] - 2025-10-28
 
 ### Fixed
