@@ -3,14 +3,22 @@
 Web-based setup interface for iCloud 2FA authentication
 Supports Home Assistant Ingress
 """
-from flask import Flask, render_template_string, request, jsonify, abort
+from flask import Flask, render_template_string, request, jsonify, abort, Response
 import json
 import os
 import subprocess
 import threading
 import time
+import sys
+import logging
 
 app = Flask(__name__)
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+# Disable Flask's default logging to console
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+log.disabled = True
 
 # Get ingress path from environment (if running under HA ingress)
 INGRESS_PATH = os.environ.get('INGRESS_PATH', '')
@@ -362,11 +370,10 @@ def request_code():
         password = config.get('icloud_password', '')
         
         if not username or not password:
-            response = jsonify({'success': False, 'message': 'Username and password not configured'})
-            response.headers['Content-Type'] = 'application/json'
-            return response
-        
-        app.logger.info(f"Triggering 2FA request for {username}")
+            return Response(
+                json.dumps({'success': False, 'message': 'Username and password not configured'}),
+                mimetype='application/json'
+            )
         
         # Create rclone config directory
         os.makedirs('/root/.config/rclone', exist_ok=True)
@@ -377,15 +384,14 @@ def request_code():
                 ['rclone', 'obscure', password],
                 capture_output=True,
                 text=True,
-                check=True,
-                env=dict(os.environ, PYTHONUNBUFFERED='1')
+                check=True
             )
             obscured_pass = obscure_result.stdout.strip()
         except subprocess.CalledProcessError as e:
-            app.logger.error(f"Failed to obscure password: {e}")
-            response = jsonify({'success': False, 'message': 'Failed to prepare configuration'})
-            response.headers['Content-Type'] = 'application/json'
-            return response
+            return Response(
+                json.dumps({'success': False, 'message': 'Failed to prepare configuration'}),
+                mimetype='application/json'
+            )
         
         config_content = f"""[icloud]
 type = iclouddrive
@@ -396,16 +402,13 @@ pass = {obscured_pass}
         with open('/root/.config/rclone/rclone.conf', 'w') as f:
             f.write(config_content)
         
-        app.logger.info("Config created, initiating connection to trigger 2FA...")
-        
         # Start rclone connection in background - this will trigger Apple to send 2FA
         proc = subprocess.Popen(
             ['rclone', 'lsd', 'icloud:', '--verbose'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            text=True,
-            env=dict(os.environ, PYTHONUNBUFFERED='1')
+            text=True
         )
         
         # Store the process so we can send the code to it later
@@ -416,25 +419,16 @@ pass = {obscured_pass}
         # Wait a moment to ensure connection started
         time.sleep(3)
         
-        app.logger.info("Connection initiated - Apple should send 2FA code now")
-        
-        response = jsonify({
-            'success': True,
-            'message': '2FA request sent to Apple! Check your iPhone/iPad for the code.'
-        })
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return Response(
+            json.dumps({'success': True, 'message': '2FA request sent to Apple! Check your iPhone/iPad for the code.'}),
+            mimetype='application/json'
+        )
         
     except Exception as e:
-        app.logger.error(f"Failed to request 2FA: {e}")
-        import traceback
-        app.logger.error(traceback.format_exc())
-        response = jsonify({
-            'success': False,
-            'message': f'Error: {str(e)}'
-        })
-        response.headers['Content-Type'] = 'application/json'
-        return response
+        return Response(
+            json.dumps({'success': False, 'message': f'Error: {str(e)}'}),
+            mimetype='application/json'
+        )
 
 @app.route('/setup', methods=['POST'])
 def setup():
@@ -515,15 +509,17 @@ def setup():
 
 if __name__ == '__main__':
     port = int(os.environ.get('INGRESS_PORT', 8099))
-    app.logger.info(f"Starting iCloud Setup Web Interface on port {port}")
-    app.logger.info(f"Binding to 0.0.0.0:{port}")
-    if INGRESS_PATH:
-        app.logger.info(f"Running with Home Assistant Ingress support")
-        app.logger.info(f"Ingress path: {INGRESS_PATH}")
-        app.logger.info(f"IP restriction: Only {INGRESS_GATEWAY_IP} allowed")
-    else:
-        app.logger.info(f"Running in standalone mode")
-        app.logger.info(f"All IPs allowed (no Ingress)")
     
-    # Run with threaded=True for better Ingress support
-    app.run(host='0.0.0.0', port=port, debug=False, threaded=True, use_reloader=False)
+    # Disable all Flask logging
+    import logging
+    logging.getLogger('werkzeug').disabled = True
+    app.logger.disabled = True
+    
+    # Run with minimal output
+    app.run(
+        host='0.0.0.0', 
+        port=port, 
+        debug=False, 
+        threaded=True, 
+        use_reloader=False
+    )

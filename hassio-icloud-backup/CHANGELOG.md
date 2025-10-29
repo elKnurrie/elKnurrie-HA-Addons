@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.5.4] - 2025-10-29
+
+### Fixed
+- Disable ALL Flask logging (werkzeug and app.logger)
+- Use Response() instead of jsonify() for cleaner JSON
+- Explicitly set mimetype='application/json'
+- Remove all logging statements that could leak to HTTP
+- Completely silent Flask server
+
+This version strips out every possible source of output
+that could contaminate HTTP responses.
+
 ## [3.5.3] - 2025-10-29
 
 ### Fixed
