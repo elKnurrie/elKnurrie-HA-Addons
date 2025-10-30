@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.5.9] - 2025-10-30
+
+### Fixed
+- Set werkzeug logging to WARNING (Flask dev server requires this)
+- Capture Flask stderr to /data/flask_error.log for debugging
+- Configure basicConfig for proper logging setup
+- Log Flask PID immediately after start
+
+Flask's development server (Werkzeug) requires WARNING level
+logging to function properly. Setting it to ERROR caused the
+server to exit silently.
+
 ## [3.5.8] - 2025-10-30
 
 ### Fixed

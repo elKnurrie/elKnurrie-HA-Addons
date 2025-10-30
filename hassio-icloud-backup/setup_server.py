@@ -493,9 +493,11 @@ if __name__ == '__main__':
     print(f"[FLASK] Ingress mode: {bool(os.environ.get('INGRESS_PATH'))}", file=sys.stderr)
     sys.stderr.flush()
     
-    # Disable Flask request logging but keep errors
+    # Configure logging - WARNING level for werkzeug (Flask needs this!)
+    import logging
+    logging.basicConfig(level=logging.WARNING, format='%(message)s')
     log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
+    log.setLevel(logging.WARNING)  # Flask dev server needs WARNING to run properly
     
     try:
         # Test if port is available

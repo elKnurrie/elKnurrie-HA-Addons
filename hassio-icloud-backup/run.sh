@@ -72,11 +72,18 @@ EOF
     
     # Start the web setup interface
     bashio::log.info "Starting web interface on port ${INGRESS_PORT:-8099}..."
-    python3 /setup_server.py &
+    python3 /setup_server.py 2>/data/flask_error.log &
     FLASK_PID=$!
+    bashio::log.info "Flask PID: $FLASK_PID"
     
     # Wait for Flask to start and bind to port
     sleep 5
+    
+    # Show any errors from Flask
+    if [ -f /data/flask_error.log ] && [ -s /data/flask_error.log ]; then
+        bashio::log.warning "Flask stderr output:"
+        cat /data/flask_error.log
+    fi
     
     # Check if Flask is still running
     if ps -p $FLASK_PID > /dev/null 2>&1; then
