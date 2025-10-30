@@ -489,13 +489,25 @@ if __name__ == '__main__':
     
     # Enable basic startup logging
     import sys
+    
+    # Test Flask and Werkzeug first
+    try:
+        import flask
+        from werkzeug.serving import run_simple
+        print(f"[FLASK] Flask version: {flask.__version__}", file=sys.stderr)
+        print(f"[FLASK] Werkzeug available: OK", file=sys.stderr)
+    except ImportError as e:
+        print(f"[FLASK] FATAL: Failed to import Flask/Werkzeug: {e}", file=sys.stderr)
+        sys.stderr.flush()
+        sys.exit(1)
+    
     print(f"[FLASK] Starting iCloud Setup Web Interface on 0.0.0.0:{port}", file=sys.stderr)
     print(f"[FLASK] Ingress mode: {bool(os.environ.get('INGRESS_PATH'))}", file=sys.stderr)
     sys.stderr.flush()
     
     # Configure logging - WARNING level for werkzeug (Flask needs this!)
     import logging
-    logging.basicConfig(level=logging.WARNING, format='%(message)s')
+    logging.basicConfig(level=logging.WARNING, format='%(message)s', stream=sys.stderr)
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.WARNING)  # Flask dev server needs WARNING to run properly
     
@@ -516,7 +528,10 @@ if __name__ == '__main__':
         print(f"[FLASK] Starting Flask server...", file=sys.stderr)
         sys.stderr.flush()
         
-        # Run with minimal output
+        # Run Flask server - this should block forever
+        print(f"[FLASK] Calling app.run()...", file=sys.stderr)
+        sys.stderr.flush()
+        
         app.run(
             host='0.0.0.0', 
             port=port, 
@@ -525,7 +540,8 @@ if __name__ == '__main__':
             use_reloader=False
         )
         
-        print(f"[FLASK] Flask server stopped normally", file=sys.stderr)
+        # If we get here, Flask stopped
+        print(f"[FLASK] Flask server stopped normally (this shouldn't happen!)", file=sys.stderr)
         sys.stderr.flush()
         
     except KeyboardInterrupt:

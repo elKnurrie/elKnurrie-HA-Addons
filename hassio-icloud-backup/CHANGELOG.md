@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.6.0] - 2025-10-30
+
+### Fixed
+- Add Flask/Werkzeug import verification at startup
+- Log Flask and Werkzeug versions for debugging
+- Use unbuffered Python output (python3 -u)
+- Stream logging.basicConfig to stderr explicitly
+- Add "Calling app.run()" log to pinpoint exact failure
+
+### Debug
+- Shows Flask version on startup
+- Verifies Werkzeug is importable
+- Logs every step before app.run() blocks
+
+This will reveal if Flask/Werkzeug has import issues
+or if app.run() is failing silently.
+
 ## [3.5.9] - 2025-10-30
 
 ### Fixed
