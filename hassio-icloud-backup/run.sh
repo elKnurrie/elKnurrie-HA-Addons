@@ -71,13 +71,21 @@ EOF
     fi
     
     # Start the web setup interface
-    # Don't pipe output - let Flask handle its own logging
-    bashio::log.info "Starting web interface..."
-    python3 /setup_server.py > /dev/null 2>&1 &
+    bashio::log.info "Starting web interface on port ${INGRESS_PORT:-8099}..."
+    python3 /setup_server.py &
+    FLASK_PID=$!
     
     # Wait a moment for server to start
     sleep 3
-    bashio::log.info "Web UI should now be accessible via 'OPEN WEB UI' button"
+    
+    # Check if Flask is still running
+    if ps -p $FLASK_PID > /dev/null 2>&1; then
+        bashio::log.info "✅ Flask server started successfully (PID: $FLASK_PID)"
+        bashio::log.info "Web UI should now be accessible via 'OPEN WEB UI' button"
+    else
+        bashio::log.error "❌ Flask server failed to start!"
+        bashio::log.error "Check add-on logs for Python errors"
+    fi
     
     # Keep running to allow web setup
     tail -f /dev/null

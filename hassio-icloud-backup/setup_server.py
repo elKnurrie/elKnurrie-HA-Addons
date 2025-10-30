@@ -487,16 +487,26 @@ def setup():
 if __name__ == '__main__':
     port = int(os.environ.get('INGRESS_PORT', 8099))
     
-    # Disable all Flask logging
-    import logging
-    logging.getLogger('werkzeug').disabled = True
-    app.logger.disabled = True
+    # Enable basic startup logging
+    import sys
+    print(f"[FLASK] Starting iCloud Setup Web Interface on 0.0.0.0:{port}", file=sys.stderr)
+    print(f"[FLASK] Ingress mode: {bool(os.environ.get('INGRESS_PATH'))}", file=sys.stderr)
     
-    # Run with minimal output
-    app.run(
-        host='0.0.0.0', 
-        port=port, 
-        debug=False, 
-        threaded=True, 
-        use_reloader=False
-    )
+    # Disable Flask request logging but keep errors
+    log = logging.getLogger('werkzeug')
+    log.setLevel(logging.ERROR)
+    
+    try:
+        # Run with minimal output
+        app.run(
+            host='0.0.0.0', 
+            port=port, 
+            debug=False, 
+            threaded=True, 
+            use_reloader=False
+        )
+    except Exception as e:
+        print(f"[FLASK] ERROR: Failed to start Flask server: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(1)

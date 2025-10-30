@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.5.7] - 2025-10-30
+
+### Fixed
+- Re-enable Flask startup logging to diagnose 404 errors
+- Add process health check in run.sh
+- Log Flask server PID and startup status
+- Better error reporting if Flask fails to start
+- Keep stderr output to see Python errors in HA logs
+
+This version adds debugging to identify why Flask might
+not be responding to Ingress requests (404 errors).
+
 ## [3.5.6] - 2025-10-30
 
 ### Added
