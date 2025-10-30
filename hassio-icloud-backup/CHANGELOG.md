@@ -1,5 +1,23 @@
 # Changelog
 
+## [5.0.1] - 2025-10-30
+
+### Fixed
+- Added port mapping 8099/tcp in config.json
+- Port now accessible from Home Assistant host
+- Updated instructions to use Home Assistant IP instead of localhost
+- Added command to find HA IP address
+
+### Usage
+```bash
+# Find your HA IP
+hostname -I | awk '{print $1}'
+
+# Use that IP in the curl commands
+curl http://YOUR_HA_IP:8099/request_code -X POST
+curl http://YOUR_HA_IP:8099/submit_code -X POST -d "123456"
+```
+
 ## [5.0.0] - 2025-10-30
 
 ### BREAKING CHANGE - CLI/API Only (No Web UI)
