@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.0.1] - 2025-10-30
+
+### Fixed
+- Use pgrep to check if server is running (not PID of pipe)
+- Simplified health check logic
+- Server runs in background without output piping
+
 ## [4.0.0] - 2025-10-30
 
 ### BREAKING CHANGE - Complete Rewrite

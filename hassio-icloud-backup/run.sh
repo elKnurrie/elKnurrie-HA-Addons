@@ -72,23 +72,21 @@ EOF
     
     # Start the web setup interface
     bashio::log.info "Starting web interface on port ${INGRESS_PORT:-8099}..."
-    python3 -u /simple_server.py 2>&1 | while IFS= read -r line; do
-        bashio::log.info "$line"
-    done &
+    python3 -u /simple_server.py &
     SERVER_PID=$!
     
     # Wait for server to start
     sleep 3
     
-    # Check if server is running and responding
-    if ps -p $SERVER_PID > /dev/null 2>&1; then
-        bashio::log.info "✅ Web server started successfully (PID: $SERVER_PID)"
+    # Check if Python process is running (don't check the bash pipe)
+    if pgrep -f "simple_server.py" > /dev/null 2>&1; then
+        bashio::log.info "✅ Web server is running"
         
         # Test if server responds
         if curl -f -s http://localhost:${INGRESS_PORT:-8099}/ > /dev/null 2>&1; then
             bashio::log.info "✅ Web server is responding to requests"
         else
-            bashio::log.warning "⚠️  Web server is running but not responding yet (may need more time)"
+            bashio::log.warning "⚠️  Web server starting (may need a moment)"
         fi
         
         bashio::log.info "Web UI is accessible via 'OPEN WEB UI' button"
