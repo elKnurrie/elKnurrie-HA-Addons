@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.5.5] - 2025-10-30
+
+### Fixed
+- Follow Flask best practices: Return dict directly from routes
+- Flask automatically serializes dicts to JSON (official recommendation)
+- Remove jsonify() and Response() - unnecessary complexity
+- Remove unused imports (threading, sys, Response)
+- Cleaner, simpler code following official Flask documentation
+
+Per Flask docs: "To return a JSON object from your API view,
+you can directly return a dict from the view. It will be
+serialized to JSON automatically."
+
 ## [3.5.4] - 2025-10-29
 
 ### Fixed

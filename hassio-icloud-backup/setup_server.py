@@ -3,13 +3,11 @@
 Web-based setup interface for iCloud 2FA authentication
 Supports Home Assistant Ingress
 """
-from flask import Flask, render_template_string, request, jsonify, abort, Response
+from flask import Flask, render_template_string, request, abort
 import json
 import os
 import subprocess
-import threading
 import time
-import sys
 import logging
 
 app = Flask(__name__)
@@ -355,11 +353,11 @@ def index():
 @app.route('/status')
 def status():
     """Return current authentication status"""
-    return jsonify({
+    return {
         'authenticating': auth_state['status'] == 'authenticating',
         'message': auth_state['message'],
         'status': auth_state['status']
-    })
+    }
 
 @app.route('/request_code', methods=['POST'])
 def request_code():
@@ -370,10 +368,7 @@ def request_code():
         password = config.get('icloud_password', '')
         
         if not username or not password:
-            return Response(
-                json.dumps({'success': False, 'message': 'Username and password not configured'}),
-                mimetype='application/json'
-            )
+            return {'success': False, 'message': 'Username and password not configured'}
         
         # Create rclone config directory
         os.makedirs('/root/.config/rclone', exist_ok=True)
@@ -388,10 +383,7 @@ def request_code():
             )
             obscured_pass = obscure_result.stdout.strip()
         except subprocess.CalledProcessError as e:
-            return Response(
-                json.dumps({'success': False, 'message': 'Failed to prepare configuration'}),
-                mimetype='application/json'
-            )
+            return {'success': False, 'message': 'Failed to prepare configuration'}
         
         config_content = f"""[icloud]
 type = iclouddrive
@@ -419,16 +411,10 @@ pass = {obscured_pass}
         # Wait a moment to ensure connection started
         time.sleep(3)
         
-        return Response(
-            json.dumps({'success': True, 'message': '2FA request sent to Apple! Check your iPhone/iPad for the code.'}),
-            mimetype='application/json'
-        )
+        return {'success': True, 'message': '2FA request sent to Apple! Check your iPhone/iPad for the code.'}
         
     except Exception as e:
-        return Response(
-            json.dumps({'success': False, 'message': f'Error: {str(e)}'}),
-            mimetype='application/json'
-        )
+        return {'success': False, 'message': f'Error: {str(e)}'}
 
 @app.route('/setup', methods=['POST'])
 def setup():
@@ -436,15 +422,14 @@ def setup():
     twofa_code = data.get('twofa_code', '')
     
     if not twofa_code or len(twofa_code) != 6:
-        return jsonify({'success': False, 'message': 'Invalid 2FA code format. Must be 6 digits.'})
+        return {'success': False, 'message': 'Invalid 2FA code format. Must be 6 digits.'}
     
     # Check if we have a waiting process
     proc = auth_state.get('process')
     if not proc:
-        return jsonify({'success': False, 'message': 'No authentication process waiting. Click "Request 2FA Code" first.'})
+        return {'success': False, 'message': 'No authentication process waiting. Click "Request 2FA Code" first.'}
     
     try:
-        app.logger.info(f"Sending 2FA code to rclone: {twofa_code}")
         auth_state['status'] = 'authenticating'
         auth_state['message'] = 'Verifying 2FA code...'
         
@@ -457,10 +442,7 @@ def setup():
         try:
             output, _ = proc.communicate(timeout=30)
             
-            app.logger.info(f"rclone output:\n{output}")
-            
             if proc.returncode == 0 or "success" in output.lower() or not ("error" in output.lower() or "failed" in output.lower()):
-                app.logger.info("Authentication successful!")
                 auth_state['status'] = 'success'
                 auth_state['message'] = 'Authentication successful!'
                 auth_state['process'] = None
@@ -470,42 +452,37 @@ def setup():
                     f.write('configured')
                 
                 config = load_config()
-                return jsonify({
+                return {
                     'success': True,
                     'message': f'Successfully authenticated! Session saved for {config.get("icloud_username", "")}.'
-                })
+                }
             else:
-                app.logger.error(f"Authentication failed: {output}")
                 auth_state['status'] = 'error'
                 auth_state['message'] = 'Invalid 2FA code or authentication failed'
                 auth_state['process'] = None
-                return jsonify({
+                return {
                     'success': False,
                     'message': 'Invalid 2FA code. Please request a new code and try again.'
-                })
+                }
                 
         except subprocess.TimeoutExpired:
             proc.kill()
-            app.logger.error("Authentication timed out")
             auth_state['status'] = 'error'
             auth_state['message'] = 'Authentication timed out'
             auth_state['process'] = None
-            return jsonify({
+            return {
                 'success': False,
                 'message': 'Authentication timed out. Please try again.'
-            })
+            }
             
     except Exception as e:
-        app.logger.error(f"Exception during authentication: {e}")
-        import traceback
-        app.logger.error(traceback.format_exc())
         auth_state['status'] = 'error'
         auth_state['message'] = f'Error: {str(e)}'
         auth_state['process'] = None
-        return jsonify({
+        return {
             'success': False,
             'message': f'Error: {str(e)}'
-        })
+        }
 
 if __name__ == '__main__':
     port = int(os.environ.get('INGRESS_PORT', 8099))
