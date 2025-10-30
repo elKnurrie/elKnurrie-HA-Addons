@@ -90,48 +90,51 @@ class AuthAPIHandler(BaseHTTPRequestHandler):
                 })
                 return
             
-            # Create rclone config
+            # Create rclone config directory
             os.makedirs('/root/.config/rclone', exist_ok=True)
             
-            result = subprocess.run(
-                ['rclone', 'obscure', password],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            obscured_pass = result.stdout.strip()
-            
-            config_content = f"""[icloud]
-type = iclouddrive
-user = {username}
-pass = {obscured_pass}
-"""
-            with open('/root/.config/rclone/rclone.conf', 'w') as f:
-                f.write(config_content)
-            
-            # Use 'rclone config reconnect' to properly trigger 2FA
-            # This is the correct way to establish trust tokens for iCloud
-            proc = subprocess.Popen(
-                ['rclone', 'config', 'reconnect', 'icloud:'],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True
-            )
-            
-            auth_state['process'] = proc
-            auth_state['status'] = 'waiting_for_code'
-            auth_state['message'] = 'Check your iPhone/iPad for the 2FA code'
-            
-            # Give rclone a moment to start the authentication process
-            time.sleep(3)
-            
-            self.send_json({
-                'success': True,
-                'message': '2FA code should be sent to your Apple devices now. Check your iPhone/iPad!',
-                'next_step': 'Run: curl http://YOUR_HA_IP:8099/submit_code -X POST -d "YOUR_6_DIGIT_CODE"',
-                'note': 'Enter the code within 60 seconds before it expires'
-            })
+            # Use 'rclone config create' to create the config non-interactively
+            # Then use 'rclone lsf' to trigger 2FA
+            try:
+                # First, create the config with rclone config create
+                result = subprocess.run(
+                    ['rclone', 'config', 'create', 'icloud', 'iclouddrive',
+                     f'user={username}',
+                     f'pass={password}'],
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                
+                if result.returncode != 0:
+                    raise Exception(f"Failed to create rclone config: {result.stderr}")
+                
+                # Now start a process to list files - this will trigger 2FA
+                proc = subprocess.Popen(
+                    ['rclone', 'lsf', 'icloud:', '--max-depth', '1', '-vv'],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True
+                )
+                
+                auth_state['process'] = proc
+                auth_state['status'] = 'waiting_for_code'
+                auth_state['message'] = 'Check your iPhone/iPad for the 2FA code'
+                
+                # Give rclone time to start requesting 2FA
+                time.sleep(3)
+                
+                self.send_json({
+                    'success': True,
+                    'message': 'Apple should send a 2FA code to your devices now. Check your iPhone/iPad!',
+                    'next_step': 'Run: curl http://YOUR_HA_IP:8099/submit_code -X POST -d "YOUR_6_DIGIT_CODE"',
+                    'note': 'Enter the code within 60 seconds before it expires',
+                    'tip': 'Make sure you are using an app-specific password from appleid.apple.com'
+                })
+                
+            except subprocess.TimeoutExpired:
+                raise Exception("rclone config create timed out")
         
         except Exception as e:
             auth_state['status'] = 'error'

@@ -1,5 +1,20 @@
 # Changelog
 
+## [5.1.1] - 2025-10-30
+
+### Fixed - Correct rclone command sequence
+- Use `rclone config create` to create config non-interactively
+- Then use `rclone lsf` to trigger actual 2FA prompt
+- `config reconnect` requires existing auth, not suitable for first-time setup
+- `config create` + `lsf` is the correct sequence for new authentication
+
+### Technical Details
+The correct flow is:
+1. `rclone config create icloud iclouddrive user=X pass=Y` - creates config
+2. `rclone lsf icloud:` - attempts to list files, triggers 2FA
+3. User submits 2FA code to stdin
+4. Trust tokens are saved for future use
+
 ## [5.1.0] - 2025-10-30
 
 ### Fixed - CRITICAL 2FA Fix
