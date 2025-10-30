@@ -10,21 +10,18 @@ RUN \
         ca-certificates \
         unzip \
         python3 \
-        py3-pip \
-        py3-flask \
     && curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip \
     && unzip -o rclone-current-linux-amd64.zip \
     && cd rclone-*-linux-amd64 \
     && cp rclone /usr/bin/ \
     && chmod 755 /usr/bin/rclone \
     && cd .. \
-    && rm -rf rclone-* \
-    && pip3 install --break-system-packages flask
+    && rm -rf rclone-*
 
 # Copy add-on files
-COPY setup_server.py /
+COPY simple_server.py /
 COPY run.sh /
-RUN chmod a+x /run.sh /setup_server.py
+RUN chmod a+x /run.sh /simple_server.py
 
 # Expose port for setup web interface
 EXPOSE 8099

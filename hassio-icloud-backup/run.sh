@@ -72,35 +72,28 @@ EOF
     
     # Start the web setup interface
     bashio::log.info "Starting web interface on port ${INGRESS_PORT:-8099}..."
-    python3 -u /setup_server.py 2>/data/flask_error.log &
-    FLASK_PID=$!
-    bashio::log.info "Flask PID: $FLASK_PID"
+    python3 -u /simple_server.py 2>&1 | while IFS= read -r line; do
+        bashio::log.info "$line"
+    done &
+    SERVER_PID=$!
     
-    # Wait for Flask to start and bind to port
-    sleep 5
+    # Wait for server to start
+    sleep 3
     
-    # Show any errors from Flask
-    if [ -f /data/flask_error.log ] && [ -s /data/flask_error.log ]; then
-        bashio::log.warning "Flask stderr output:"
-        cat /data/flask_error.log
-        bashio::log.warning "---"
-    fi
-    
-    # Check if Flask is still running
-    if ps -p $FLASK_PID > /dev/null 2>&1; then
-        bashio::log.info "✅ Flask server started successfully (PID: $FLASK_PID)"
+    # Check if server is running and responding
+    if ps -p $SERVER_PID > /dev/null 2>&1; then
+        bashio::log.info "✅ Web server started successfully (PID: $SERVER_PID)"
         
-        # Try to connect to Flask to verify it's responding
-        if curl -f http://localhost:${INGRESS_PORT:-8099}/ > /dev/null 2>&1; then
-            bashio::log.info "✅ Flask server is responding to requests"
-            bashio::log.info "Web UI should now be accessible via 'OPEN WEB UI' button"
+        # Test if server responds
+        if curl -f -s http://localhost:${INGRESS_PORT:-8099}/ > /dev/null 2>&1; then
+            bashio::log.info "✅ Web server is responding to requests"
         else
-            bashio::log.warning "⚠️  Flask server is running but not responding yet"
-            bashio::log.info "Web UI should be accessible via 'OPEN WEB UI' button"
+            bashio::log.warning "⚠️  Web server is running but not responding yet (may need more time)"
         fi
+        
+        bashio::log.info "Web UI is accessible via 'OPEN WEB UI' button"
     else
-        bashio::log.error "❌ Flask server failed to start!"
-        bashio::log.error "Check add-on logs for Python errors"
+        bashio::log.error "❌ Web server failed to start!"
         exit 1
     fi
     

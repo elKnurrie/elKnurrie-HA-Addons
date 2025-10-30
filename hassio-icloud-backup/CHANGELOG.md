@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.0.0] - 2025-10-30
+
+### BREAKING CHANGE - Complete Rewrite
+- **Removed Flask entirely** - no more Flask/Werkzeug issues!
+- **Using Python's built-in http.server** - zero external dependencies
+- Simpler, more reliable HTTP server
+- No complex logging configuration needed
+- Works with standard Python 3 only
+
+### Benefits
+- ✅ No Flask installation issues
+- ✅ No Werkzeug logging problems  
+- ✅ Smaller Docker image (no pip/Flask)
+- ✅ More reliable startup
+- ✅ Built-in Python standard library only
+
+This is a major version because we completely replaced
+the web server implementation. Everything else works
+the same way from the user's perspective.
+
 ## [3.6.0] - 2025-10-30
 
 ### Fixed
