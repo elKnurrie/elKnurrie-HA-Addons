@@ -1,5 +1,26 @@
 # Changelog
 
+## [5.2.0] - 2025-10-30
+
+### Fixed - Root Cause Identified and Resolved
+**IMPORTANT: iCloud Drive requires trust tokens even with app-specific passwords**
+
+This is an Apple/iCloud limitation, not an rclone issue:
+- App-specific passwords bypass 2FA for AUTHENTICATION
+- But iCloud Drive access requires TRUST TOKENS
+- Trust tokens can only be obtained through ONE-TIME 2FA handshake
+- After initial 2FA, tokens are saved and no more 2FA needed
+
+### Changes
+- Create rclone config manually (not using `config create`)
+- Use `rclone lsf` to trigger trust token request
+- Clear messaging that this is ONE-TIME setup
+- Trust tokens are persistent - 2FA only needed once
+
+### User Impact
+Users must perform 2FA ONCE during setup, then never again.
+This is unavoidable due to how Apple's iCloud Drive API works.
+
 ## [5.1.2] - 2025-10-30
 
 ### Fixed - Correct parameter names for iCloud backend

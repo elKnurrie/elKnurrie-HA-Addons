@@ -34,30 +34,25 @@ try {
 }
 
 Write-Host ""
-Write-Host "Step 2: Creating rclone config non-interactively..." -ForegroundColor Cyan
-Write-Host "Command: rclone config create icloud iclouddrive apple_id=*** password=***" -ForegroundColor Gray
+Write-Host "Step 2: Creating rclone config with manual file..." -ForegroundColor Cyan
 Write-Host ""
 
-try {
-    $output = rclone config create icloud iclouddrive "apple_id=$username" "password=$obscuredPass" 2>&1 | Out-String
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "✅ Config created successfully" -ForegroundColor Green
-        Write-Host $output -ForegroundColor Gray
-    } else {
-        Write-Host "❌ Config creation failed" -ForegroundColor Red
-        Write-Host $output -ForegroundColor Red
-        Write-Host ""
-        Write-Host "Common issues:" -ForegroundColor Yellow
-        Write-Host "  - Make sure you're using an APP-SPECIFIC password" -ForegroundColor Gray
-        Write-Host "  - Not your regular Apple ID password" -ForegroundColor Gray
-        Write-Host "  - Generate at: https://appleid.apple.com/account/manage" -ForegroundColor Cyan
-        exit 1
-    }
-} catch {
-    Write-Host "❌ Error: $_" -ForegroundColor Red
-    exit 1
+# Create config manually since config create doesn't support 2FA interactively
+$configDir = "$env:APPDATA\rclone"
+if (!(Test-Path $configDir)) {
+    New-Item -ItemType Directory -Path $configDir -Force | Out-Null
 }
+
+$configContent = @"
+[icloud]
+type = iclouddrive
+apple_id = $username
+password = $obscuredPass
+"@
+
+$configPath = "$configDir\rclone.conf"
+$configContent | Out-File -FilePath $configPath -Encoding ASCII -Force
+Write-Host "✅ Config file created at $configPath" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "Step 3: Attempting to list iCloud files (this triggers 2FA)..." -ForegroundColor Cyan
