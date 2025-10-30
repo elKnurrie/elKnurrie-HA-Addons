@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.5.6] - 2025-10-30
+
+### Added
+- Local Docker testing environment with docker-compose
+- PowerShell test scripts for Windows development
+- test-local.ps1 for full Docker testing
+- test-flask-only.ps1 for rapid Flask-only testing
+- TESTING.md with complete local testing guide
+- Debugging tools for JSON response issues
+
+### Developer Experience
+- Test changes instantly without pushing to GitHub
+- Iterate quickly with Flask-only mode
+- Debug JSON responses in browser console
+- Complete Docker testing environment
+
 ## [3.5.5] - 2025-10-30
 
 ### Fixed
