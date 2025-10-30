@@ -67,35 +67,44 @@ EOF
             bashio::log.info "Delete /data/icloud_2fa_code.txt and try again with a new code"
         fi
     else
-        bashio::log.info "Waiting for 2FA code via Web UI..."
+        bashio::log.info "Waiting for 2FA authentication..."
     fi
     
-    # Start the web setup interface
-    bashio::log.info "Starting web interface on port ${INGRESS_PORT:-8099}..."
-    python3 -u /simple_server.py &
-    SERVER_PID=$!
+    # Start the API server
+    bashio::log.info ""
+    bashio::log.info "╔══════════════════════════════════════════════════════════╗"
+    bashio::log.info "║  iCloud 2FA Setup Required                              ║"
+    bashio::log.info "╚══════════════════════════════════════════════════════════╝"
+    bashio::log.info ""
+    bashio::log.info "Open Home Assistant Terminal and run these commands:"
+    bashio::log.info ""
+    bashio::log.info "1️⃣  Request 2FA code:"
+    bashio::log.info "   curl http://localhost:8099/request_code -X POST"
+    bashio::log.info ""
+    bashio::log.info "2️⃣  Check your iPhone/iPad for the 6-digit code"
+    bashio::log.info ""
+    bashio::log.info "3️⃣  Submit the code (replace 123456 with your code):"
+    bashio::log.info "   curl http://localhost:8099/submit_code -X POST -d \"123456\""
+    bashio::log.info ""
+    bashio::log.info "4️⃣  Restart this add-on after successful authentication"
+    bashio::log.info ""
+    bashio::log.info "Starting API server on port 8099..."
+    
+    python3 -u /auth_api.py &
     
     # Wait for server to start
     sleep 3
     
-    # Check if Python process is running (don't check the bash pipe)
-    if pgrep -f "simple_server.py" > /dev/null 2>&1; then
-        bashio::log.info "✅ Web server is running"
-        
-        # Test if server responds
-        if curl -f -s http://localhost:${INGRESS_PORT:-8099}/ > /dev/null 2>&1; then
-            bashio::log.info "✅ Web server is responding to requests"
-        else
-            bashio::log.warning "⚠️  Web server starting (may need a moment)"
-        fi
-        
-        bashio::log.info "Web UI is accessible via 'OPEN WEB UI' button"
+    # Check if server is running
+    if pgrep -f "auth_api.py" > /dev/null 2>&1; then
+        bashio::log.info "✅ API server is ready"
+        bashio::log.info "💡 Use the commands above in Home Assistant Terminal"
     else
-        bashio::log.error "❌ Web server failed to start!"
+        bashio::log.error "❌ API server failed to start"
         exit 1
     fi
     
-    # Keep running to allow web setup
+    # Keep running and wait for authentication
     tail -f /dev/null
 fi
 

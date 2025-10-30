@@ -1,5 +1,60 @@
 # Changelog
 
+## [5.0.0] - 2025-10-30
+
+### BREAKING CHANGE - CLI/API Only (No Web UI)
+- **Removed web interface completely** - too unreliable in HA environment
+- **Simple REST API** on localhost:8099
+- **Use curl from HA Terminal** - much more reliable
+- No Ingress, no complex routing, just simple API calls
+
+### Usage
+```bash
+# Step 1: Request 2FA code
+curl http://localhost:8099/request_code -X POST
+
+# Step 2: Check iPhone/iPad for 6-digit code
+
+# Step 3: Submit code (replace 123456)
+curl http://localhost:8099/submit_code -X POST -d "123456"
+
+# Step 4: Restart add-on
+```
+
+### Why This Change?
+Web interfaces in HA add-ons have been problematic:
+- Ingress routing issues
+- Flask/HTTP server reliability problems
+- Complex troubleshooting
+
+Terminal + API is:
+- ✅ Simple and direct
+- ✅ Always works
+- ✅ Easy to debug
+- ✅ No browser/routing issues
+
+## [4.0.1] - 2025-10-30
+
+### BREAKING CHANGE - CLI Authentication
+- **Removed web interface entirely** (too unreliable in HA)
+- **New: Interactive CLI authentication tool**
+- Authenticate via Home Assistant Terminal
+- Simple, reliable, no HTTP server needed
+
+### How to Authenticate
+Run in HA Terminal:
+```
+docker exec -it addon_local_hassio_icloud_backup python3 /icloud_auth.py
+```
+
+### Why This Change?
+Web servers (Flask and http.server) were unreliable in the
+Home Assistant add-on environment. The CLI approach is:
+- ✅ More reliable
+- ✅ Simpler (no HTTP/networking issues)
+- ✅ Interactive prompts guide you through
+- ✅ Works consistently across all HA installations
+
 ## [4.0.1] - 2025-10-30
 
 ### Fixed

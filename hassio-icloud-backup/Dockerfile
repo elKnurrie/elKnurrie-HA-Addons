@@ -19,9 +19,9 @@ RUN \
     && rm -rf rclone-*
 
 # Copy add-on files
-COPY simple_server.py /
+COPY auth_api.py /
 COPY run.sh /
-RUN chmod a+x /run.sh /simple_server.py
+RUN chmod a+x /run.sh /auth_api.py
 
 # Expose port for setup web interface
 EXPOSE 8099
