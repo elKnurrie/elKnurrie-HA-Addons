@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.5.8] - 2025-10-30
+
+### Fixed
+- Enhanced Flask startup error detection
+- Check if port is already in use before starting
+- Test Flask responsiveness after startup
+- Better error messages with exception types
+- Increased startup wait time to 5 seconds
+- Exit with error code if Flask fails (forces add-on stop)
+
+This version adds comprehensive diagnostics to identify
+why Flask exits immediately in Home Assistant:
+- Port availability check
+- Exception type and full traceback
+- HTTP connectivity test
+- Proper error exit codes
+
 ## [3.5.7] - 2025-10-30
 
 ### Fixed

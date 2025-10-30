@@ -75,16 +75,25 @@ EOF
     python3 /setup_server.py &
     FLASK_PID=$!
     
-    # Wait a moment for server to start
-    sleep 3
+    # Wait for Flask to start and bind to port
+    sleep 5
     
     # Check if Flask is still running
     if ps -p $FLASK_PID > /dev/null 2>&1; then
         bashio::log.info "✅ Flask server started successfully (PID: $FLASK_PID)"
-        bashio::log.info "Web UI should now be accessible via 'OPEN WEB UI' button"
+        
+        # Try to connect to Flask to verify it's responding
+        if curl -f http://localhost:${INGRESS_PORT:-8099}/ > /dev/null 2>&1; then
+            bashio::log.info "✅ Flask server is responding to requests"
+            bashio::log.info "Web UI should now be accessible via 'OPEN WEB UI' button"
+        else
+            bashio::log.warning "⚠️  Flask server is running but not responding yet"
+            bashio::log.info "Web UI should be accessible via 'OPEN WEB UI' button"
+        fi
     else
         bashio::log.error "❌ Flask server failed to start!"
         bashio::log.error "Check add-on logs for Python errors"
+        exit 1
     fi
     
     # Keep running to allow web setup

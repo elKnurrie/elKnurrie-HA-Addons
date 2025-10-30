@@ -491,12 +491,29 @@ if __name__ == '__main__':
     import sys
     print(f"[FLASK] Starting iCloud Setup Web Interface on 0.0.0.0:{port}", file=sys.stderr)
     print(f"[FLASK] Ingress mode: {bool(os.environ.get('INGRESS_PATH'))}", file=sys.stderr)
+    sys.stderr.flush()
     
     # Disable Flask request logging but keep errors
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
     
     try:
+        # Test if port is available
+        import socket
+        test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        test_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            test_socket.bind(('0.0.0.0', port))
+            test_socket.close()
+            print(f"[FLASK] Port {port} is available", file=sys.stderr)
+        except OSError as e:
+            print(f"[FLASK] ERROR: Port {port} is already in use: {e}", file=sys.stderr)
+            sys.stderr.flush()
+            sys.exit(1)
+        
+        print(f"[FLASK] Starting Flask server...", file=sys.stderr)
+        sys.stderr.flush()
+        
         # Run with minimal output
         app.run(
             host='0.0.0.0', 
@@ -505,8 +522,16 @@ if __name__ == '__main__':
             threaded=True, 
             use_reloader=False
         )
+        
+        print(f"[FLASK] Flask server stopped normally", file=sys.stderr)
+        sys.stderr.flush()
+        
+    except KeyboardInterrupt:
+        print(f"[FLASK] Flask server stopped by user", file=sys.stderr)
+        sys.stderr.flush()
     except Exception as e:
-        print(f"[FLASK] ERROR: Failed to start Flask server: {e}", file=sys.stderr)
+        print(f"[FLASK] FATAL ERROR: {type(e).__name__}: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
         sys.exit(1)
