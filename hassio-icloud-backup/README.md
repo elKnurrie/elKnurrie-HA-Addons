@@ -1,4 +1,4 @@
-# Home Assistant iCloud Backup# Home Assistant iCloud Backup# Home Assistant iCloud Backup# Home Assistant iCloud Backup Add-on
+# Home Assistant iCloud Backup# Home Assistant iCloud Backup# Home Assistant iCloud Backup# Home Assistant iCloud Backup# Home Assistant iCloud Backup Add-on
 
 
 
@@ -6,217 +6,437 @@ Automatically backup your Home Assistant snapshots to iCloud Drive using rclone.
 
 
 
-## ⚠️ Important: Why 2FA is RequiredAutomatically backup your Home Assistant snapshots to iCloud Drive using rclone.
+## ⚠️ CRITICAL REQUIREMENTSAutomatically backup your Home Assistant snapshots to iCloud Drive using rclone.
 
 
 
-**Even with app-specific passwords, iCloud Drive requires a ONE-TIME 2FA handshake.**
+**Before you begin, you MUST configure your Apple ID correctly:**
 
 
 
-This is an Apple/iCloud limitation, not an add-on issue:## 🚀 Quick StartAutomatically backup your Home Assistant snapshots to iCloud Drive using rclone.⚠️ **IMPORTANT: Current Status** ⚠️
+### 1. Disable Advanced Data Protection## ⚠️ Important: Why 2FA is RequiredAutomatically backup your Home Assistant snapshots to iCloud Drive using rclone.
+
+rclone **CANNOT** access iCloud Drive if Advanced Data Protection is enabled.
+
+
+
+**On iPhone/iPad:**
+
+1. Go to **Settings** → **[Your Name]** → **iCloud****Even with app-specific passwords, iCloud Drive requires a ONE-TIME 2FA handshake.**
+
+2. Scroll down to **Advanced Data Protection**
+
+3. Make sure it is **OFF** (disabled)
+
+
+
+### 2. Enable "Access iCloud Data on the Web"This is an Apple/iCloud limitation, not an add-on issue:## 🚀 Quick StartAutomatically backup your Home Assistant snapshots to iCloud Drive using rclone.⚠️ **IMPORTANT: Current Status** ⚠️
+
+This must be enabled for third-party access.
 
 - ✅ App-specific passwords bypass 2FA for **authentication**  
 
-- ❌ But iCloud Drive API requires **trust tokens**
+**On iPhone/iPad:**
 
-- 🔑 Trust tokens can ONLY be obtained through **2FA handshake**
+1. Go to **Settings** → **[Your Name]** → **iCloud**- ❌ But iCloud Drive API requires **trust tokens**
 
-- 💾 After initial setup, tokens are saved permanently### 1. Configure the Add-on
+2. Find **Access iCloud Data on the Web**
 
-- 🎉 **You only do 2FA ONCE - then never again!**
+3. Make sure it is **ON** (enabled)- 🔑 Trust tokens can ONLY be obtained through **2FA handshake**
 
 
 
-This is unavoidable - it's how Apple's iCloud Drive API works.
+### 3. Use Your REAL Apple ID Password- 💾 After initial setup, tokens are saved permanently### 1. Configure the Add-on
 
-- **icloud_username**: Your Apple ID email## 🚀 Quick StartThis add-on uses rclone's iCloud Drive backend, which **requires interactive terminal authentication**. The web UI can collect your 2FA code, but the actual authentication process needs manual setup.
+❌ **DO NOT use app-specific passwords** - they don't work with iCloud Drive in rclone  
+
+✅ **Use your actual Apple ID password** - the same one you use to log into Apple devices- 🎉 **You only do 2FA ONCE - then never again!**
+
+
 
 ## 🚀 Quick Start
 
-- **icloud_password**: Your Apple ID password (or app-specific password)
 
-### 1. Generate App-Specific Password
 
-- **backup_source**: `/backup` (default)
+### Step 1: Configure the Add-onThis is unavoidable - it's how Apple's iCloud Drive API works.
 
-**You MUST use an app-specific password (not your regular Apple ID password):**
+
+
+- **icloud_username**: Your Apple ID email- **icloud_username**: Your Apple ID email## 🚀 Quick StartThis add-on uses rclone's iCloud Drive backend, which **requires interactive terminal authentication**. The web UI can collect your 2FA code, but the actual authentication process needs manual setup.
+
+- **icloud_password**: Your **REAL** Apple ID password (NOT an app-specific password!)
+
+- **backup_source**: `/backup` (default)## 🚀 Quick Start
 
 - **icloud_folder**: Folder name in iCloud Drive (default: `HomeAssistantBackups`)
 
-1. Go to https://appleid.apple.com/account/manage
-
-2. Sign in with your Apple ID- **retention_days**: How many days to keep backups (default: 14)### 1. Configure the Add-on## Known Limitation
-
-3. Under "Security" → "App-Specific Passwords" → Generate
-
-4. Label it "Home Assistant" and copy the password
+- **retention_days**: How many days to keep backups (default: 14)- **icloud_password**: Your Apple ID password (or app-specific password)
 
 
+
+### Step 2: Start the Add-on### 1. Generate App-Specific Password
+
+
+
+The add-on will detect it needs authentication and show instructions in the logs.- **backup_source**: `/backup` (default)
+
+
+
+### Step 3: Perform ONE-TIME 2FA Setup**You MUST use an app-specific password (not your regular Apple ID password):**
+
+
+
+Open **Home Assistant Terminal** (Settings → System → Terminal).- **icloud_folder**: Folder name in iCloud Drive (default: `HomeAssistantBackups`)
+
+
+
+**Find your Home Assistant IP address:**1. Go to https://appleid.apple.com/account/manage
+
+```bash
+
+hostname -I | awk '{print $1}'2. Sign in with your Apple ID- **retention_days**: How many days to keep backups (default: 14)### 1. Configure the Add-on## Known Limitation
+
+```
+
+Note the IP address (e.g., `192.168.1.100`)3. Under "Security" → "App-Specific Passwords" → Generate
+
+
+
+**Request 2FA code** (replace `YOUR_HA_IP` with your actual IP):4. Label it "Home Assistant" and copy the password
+
+```bash
+
+curl http://YOUR_HA_IP:8099/request_code -X POST
+
+```
 
 ### 2. Configure the Add-on### 2. Start the Add-on
 
-
-
-- **icloud_username**: Your Apple ID email
-
-- **icloud_password**: The app-specific password you just created
-
-- **backup_source**: `/backup` (default)The add-on will detect it needs 2FA authentication and show instructions in the logs.- **icloud_username**: Your Apple ID emailRclone's iCloud Drive backend requires:
-
-- **icloud_folder**: Folder name in iCloud Drive (default: `HomeAssistantBackups`)
-
-- **retention_days**: How many days to keep backups (default: 14)
-
-
-
-### 3. Start the Add-on### 3. Authenticate (One-Time Setup)- **icloud_password**: Your Apple ID password (or app-specific password)1. Interactive terminal access for first-time authentication
-
-
-
-The add-on will detect it needs trust tokens and show instructions in the logs.
-
-
-
-### 4. Perform ONE-TIME 2FA SetupOpen **Home Assistant Terminal** (Settings → System → Terminal).- **backup_source**: `/backup` (default)2. Manual entry of 2FA code during the rclone config process
-
-
-
-Open **Home Assistant Terminal** (Settings → System → Terminal).
-
-
-
-**Step A: Find your Home Assistant IP address****Step A: Find your Home Assistant IP address**- **icloud_folder**: Folder name in iCloud Drive (default: `HomeAssistantBackups`)3. Session tokens are then saved for future use
-
-```bash
-
-hostname -I | awk '{print $1}'```bash
-
-```
-
-Note the IP address (e.g., `192.168.1.100`)hostname -I | awk '{print $1}'- **retention_days**: How many days to keep backups (default: 14)
-
-
-
-**Step B: Request trust token** (replace `YOUR_HA_IP` with your actual IP)```
-
-```bash
-
-curl http://YOUR_HA_IP:8099/request_code -X POSTNote the IP address (e.g., `192.168.1.100`)**This cannot be fully automated through a web interface** due to how rclone's authentication works.
-
-```
-
-
-
 **Expected response:**
 
-```json**Step B: Request 2FA code** (replace `YOUR_HA_IP` with your actual IP)### 2. Start the Add-on
+```json
 
 {
 
-  "success": true,```bash
+  "success": true,- **icloud_username**: Your Apple ID email
 
   "message": "Apple should send a 2FA code to your devices now...",
 
-  "note": "This is a ONE-TIME setup to establish trust tokens..."curl http://YOUR_HA_IP:8099/request_code -X POST## Alternative: Manual Setup via SSH/Terminal
+  "IMPORTANT": "You MUST use your REAL Apple ID password, NOT an app-specific password"- **icloud_password**: The app-specific password you just created
 
 }
+
+```- **backup_source**: `/backup` (default)The add-on will detect it needs 2FA authentication and show instructions in the logs.- **icloud_username**: Your Apple ID emailRclone's iCloud Drive backend requires:
+
+
+
+**Check your iPhone/iPad** for the 6-digit code- **icloud_folder**: Folder name in iCloud Drive (default: `HomeAssistantBackups`)
+
+
+
+**Submit the code** (replace both `YOUR_HA_IP` and `123456`):- **retention_days**: How many days to keep backups (default: 14)
+
+```bash
+
+curl http://YOUR_HA_IP:8099/submit_code -X POST -d "123456"
+
+```
+
+### 3. Start the Add-on### 3. Authenticate (One-Time Setup)- **icloud_password**: Your Apple ID password (or app-specific password)1. Interactive terminal access for first-time authentication
+
+**Expected response:**
+
+```json
+
+{
+
+  "success": true,The add-on will detect it needs trust tokens and show instructions in the logs.
+
+  "message": "Successfully authenticated..."
+
+}
+
+```
+
+### 4. Perform ONE-TIME 2FA SetupOpen **Home Assistant Terminal** (Settings → System → Terminal).- **backup_source**: `/backup` (default)2. Manual entry of 2FA code during the rclone config process
+
+### Step 4: Restart the Add-on
+
+
+
+After successful authentication, restart the add-on. It will now automatically backup your snapshots!
+
+Open **Home Assistant Terminal** (Settings → System → Terminal).
+
+## 🔄 Token Expiration - Re-authentication Required
+
+
+
+**Trust tokens expire after 30 days.** You'll need to repeat the 2FA process monthly.
+
+**Step A: Find your Home Assistant IP address****Step A: Find your Home Assistant IP address**- **icloud_folder**: Folder name in iCloud Drive (default: `HomeAssistantBackups`)3. Session tokens are then saved for future use
+
+When tokens expire, the add-on logs will show authentication errors. Simply:
+
+1. Stop the add-on```bash
+
+2. Delete `/data/icloud_session_configured` 
+
+3. Start the add-onhostname -I | awk '{print $1}'```bash
+
+4. Perform 2FA steps again
+
+```
+
+## ❗ Why These Requirements?
+
+Note the IP address (e.g., `192.168.1.100`)hostname -I | awk '{print $1}'- **retention_days**: How many days to keep backups (default: 14)
+
+### Why NO App-Specific Passwords?
+
+- iCloud Drive API **requires** real Apple ID password
+
+- App-specific passwords are for other Apple services (Mail, Calendar, etc.)
+
+- This is an Apple/iCloud Drive limitation, not rclone or add-on**Step B: Request trust token** (replace `YOUR_HA_IP` with your actual IP)```
+
+
+
+### Why Disable Advanced Data Protection?```bash
+
+- Advanced Data Protection encrypts data end-to-end
+
+- Third-party apps (like rclone) **cannot access** encrypted iCloud Drivecurl http://YOUR_HA_IP:8099/request_code -X POSTNote the IP address (e.g., `192.168.1.100`)**This cannot be fully automated through a web interface** due to how rclone's authentication works.
+
+- You must disable it for rclone to work
+
+```
+
+### Why Enable "Access iCloud Data on the Web"?
+
+- This setting allows web/API access to your iCloud data
+
+- Without it, rclone cannot authenticate or access iCloud Drive
+
+**Expected response:**
+
+### Security Implications
+
+⚠️ **Using your real password and disabling Advanced Data Protection reduces security**```json**Step B: Request 2FA code** (replace `YOUR_HA_IP` with your actual IP)### 2. Start the Add-on
+
+
+
+Consider:{
+
+- This is required for ANY third-party iCloud Drive access
+
+- Your password is stored securely in Home Assistant's add-on configuration  "success": true,```bash
+
+- Only enable this add-on if you accept the security trade-offs
+
+- Alternative: Use a different cloud provider (Dropbox, Google Drive, etc.)  "message": "Apple should send a 2FA code to your devices now...",
+
+
+
+## 📋 How It Works  "note": "This is a ONE-TIME setup to establish trust tokens..."curl http://YOUR_HA_IP:8099/request_code -X POST## Alternative: Manual Setup via SSH/Terminal
+
+
+
+1. **First run**: Add-on starts API server for authentication}
+
+2. **You perform 2FA once** with your real Apple ID password
+
+3. **Trust tokens saved**: Valid for 30 days``````
+
+4. **Automatic backups**: Checks for new snapshots every hour
+
+5. **Monthly refresh**: Re-authenticate when tokens expire (30 days)
+
+
+
+## 🔧 Troubleshooting**Step C: Check your iPhone/iPad** for the 6-digit codeThe add-on will detect it needs 2FA authentication and show instructions in the logs.
+
+
+
+### "Advanced Data Protection" Error
+
+If rclone fails to connect:
+
+1. Check iPhone: Settings → [Your Name] → iCloud → Advanced Data Protection**Step D: Submit the code** (replace both `YOUR_HA_IP` and `123456`)**Expected response:**
+
+2. Make sure it's **OFF**
+
+3. Restart the add-on after changing```bash
+
+
+
+### "Access Denied" or Authentication Errorscurl http://YOUR_HA_IP:8099/submit_code -X POST -d "123456"```jsonIf you have SSH access to your Home Assistant instance:
+
+1. Verify "Access iCloud Data on the Web" is **enabled**
+
+2. Make sure you're using your **real** Apple ID password (not app-specific)```
+
+3. Try generating a new 2FA code
+
+{
+
+### "Invalid Session Token" After 30 Days
+
+This is normal - tokens expire monthly:**Expected response:**
+
+1. Stop add-on
+
+2. Delete `/data/icloud_session_configured````json  "success": true,### 3. Authenticate (One-Time Setup)
+
+3. Start add-on
+
+4. Perform 2FA again{
+
+
+
+### Port 8099 Not Accessible?  "success": true,  "message": "Apple should send a 2FA code to your devices now"
+
+- Make sure add-on is running
+
+- Use correct IP address (`hostname -I` in HA Terminal)  "message": "Successfully authenticated as your@email.com"
+
+- Check port 8099 in add-on Configuration → Network
+
+}}```bash
+
+### Check Status
+
+```bash```
+
+curl http://YOUR_HA_IP:8099/status
 
 ``````
 
 
 
-**Step C: Check your iPhone/iPad** for the 6-digit codeThe add-on will detect it needs 2FA authentication and show instructions in the logs.
-
-
-
-**Step D: Submit the code** (replace both `YOUR_HA_IP` and `123456`)**Expected response:**
+### Get Help### 5. Restart the Add-on
 
 ```bash
 
-curl http://YOUR_HA_IP:8099/submit_code -X POST -d "123456"```jsonIf you have SSH access to your Home Assistant instance:
+curl http://YOUR_HA_IP:8099/helpOpen **Home Assistant Terminal** (Settings → System → Terminal) and run:# Access the add-on container
 
 ```
-
-{
-
-**Expected response:**
-
-```json  "success": true,### 3. Authenticate (One-Time Setup)
-
-{
-
-  "success": true,  "message": "Apple should send a 2FA code to your devices now"
-
-  "message": "Successfully authenticated as your@email.com"
-
-}}```bash
-
-```
-
-```
-
-### 5. Restart the Add-on
-
-Open **Home Assistant Terminal** (Settings → System → Terminal) and run:# Access the add-on container
 
 After successful authentication, restart the add-on. It will now automatically backup your snapshots to iCloud Drive!
 
+## 📝 Important Notes
+
 **Step C: Check your iPhone/iPad** for the 6-digit code
 
-**You won't need to do 2FA again** - the trust tokens are saved permanently.
+1. **rclone requires version 1.69+** (included in add-on)
 
-docker exec -it addon_local_hassio-icloud-backup /bin/bash
+2. **Trust tokens expire after 30 days** - monthly re-auth required**You won't need to do 2FA again** - the trust tokens are saved permanently.
+
+3. **Use REAL Apple ID password** - app-specific passwords don't work
+
+4. **Advanced Data Protection must be disabled** - rclone can't access encrypted drivesdocker exec -it addon_local_hassio-icloud-backup /bin/bash
+
+5. **This is Apple's limitation** - all third-party iCloud Drive tools have same requirements
 
 ## 📋 How It Works
 
+## 🔐 Security Considerations
+
 **Step D: Submit the code** (replace both `YOUR_HA_IP` and `123456`)
+
+**Before using this add-on, understand:**
 
 1. **First run**: Add-on starts API server for trust token setup
 
-2. **You perform 2FA ONCE** via curl commands in HA Terminal  ```bash```bash
+✅ **Pros:**
 
-3. **Trust tokens saved**: rclone saves tokens permanently
+- Automatic backups to your personal iCloud storage2. **You perform 2FA ONCE** via curl commands in HA Terminal  ```bash```bash
 
-4. **Automatic backups**: Add-on checks for new snapshots every hour and uploads themcurl http://YOUR_HA_IP:8099/submit_code -X POST -d "123456"
+- Free storage if you have iCloud+ subscription
 
-5. **No more 2FA**: Trust tokens persist across restarts
-
-```# Step 1: Request 2FA code# Run rclone config
-
-## 🔧 Troubleshooting
+- Easy setup once configured3. **Trust tokens saved**: rclone saves tokens permanently
 
 
 
-### Port 8099 Not Accessible?
+❌ **Cons:**4. **Automatic backups**: Add-on checks for new snapshots every hour and uploads themcurl http://YOUR_HA_IP:8099/submit_code -X POST -d "123456"
 
-**Expected response:**curl http://localhost:8099/request_code -X POSTrclone config
+- Must use real Apple ID password (security risk)
 
-The add-on exposes port 8099 on your Home Assistant host. Make sure:
+- Must disable Advanced Data Protection (reduces iCloud security)5. **No more 2FA**: Trust tokens persist across restarts
+
+- Tokens expire monthly (requires re-authentication)
+
+- Password stored in add-on configuration```# Step 1: Request 2FA code# Run rclone config
+
+
+
+**Alternatives if security is a concern:**## 🔧 Troubleshooting
+
+- Use Nextcloud with end-to-end encryption
+
+- Use Dropbox/Google Drive (support app tokens)
+
+- Use encrypted external storage
+
+- Use Home Assistant Cloud backups### Port 8099 Not Accessible?
+
+
+
+## ⚙️ Advanced Configuration**Expected response:**curl http://localhost:8099/request_code -X POSTrclone config
+
+
+
+### Backup ScheduleThe add-on exposes port 8099 on your Home Assistant host. Make sure:
+
+Add-on checks for new backups every hour. Modify `run.sh` to change frequency.
 
 - The add-on is running```json
 
-- You're using the correct IP address (run `hostname -I` in HA Terminal)
+### iCloud Folder Structure
 
-- Port 8099 isn't blocked by firewall{```
+Backups uploaded to: `iCloud Drive/[icloud_folder]/[backup_filename].tar`- You're using the correct IP address (run `hostname -I` in HA Terminal)
 
 
+
+### Retention Policy- Port 8099 isn't blocked by firewall{```
+
+Backups older than `retention_days` are automatically deleted.
+
+
+
+## 🤝 Support
 
 ### Check Status  "success": true,
 
-```bash
+- **Report issues**: [GitHub Issues](https://github.com/elKnurrie/elKnurrie-HA-Addons/issues)
+
+- **Check logs**: In add-on for detailed information```bash
+
+- **API help**: `curl http://YOUR_HA_IP:8099/help`
 
 curl http://YOUR_HA_IP:8099/status  "message": "Successfully authenticated as your@email.com",# Follow the prompts:
 
+## 📜 License
+
 ```
+
+MIT License - see repository for details
 
   "next_step": "Restart the add-on to start backups"
 
+---
+
 ### Get Help
 
-```bash}**Expected response:**# - Choose: n (new remote)
+**⚠️ By using this add-on, you acknowledge:**
 
-curl http://YOUR_HA_IP:8099/help
+- You understand the security implications```bash}**Expected response:**# - Choose: n (new remote)
+
+- You accept using your real Apple ID password
+
+- You accept disabling Advanced Data Protectioncurl http://YOUR_HA_IP:8099/help
+
+- You accept monthly re-authentication requirement
 
 ``````
 

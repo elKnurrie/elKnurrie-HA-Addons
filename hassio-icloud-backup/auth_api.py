@@ -51,12 +51,18 @@ class AuthAPIHandler(BaseHTTPRequestHandler):
             config = load_config()
             self.send_json({
                 'usage': {
-                    'step1': 'curl http://localhost:8099/request_code -X POST',
+                    'step1': 'curl http://YOUR_HA_IP:8099/request_code -X POST',
                     'step2': 'Check your iPhone/iPad for the 6-digit code',
-                    'step3': 'curl http://localhost:8099/submit_code -X POST -d "123456"'
+                    'step3': 'curl http://YOUR_HA_IP:8099/submit_code -X POST -d "123456"'
                 },
                 'current_username': config.get('icloud_username', 'not configured'),
-                'authenticated': os.path.exists('/data/icloud_session_configured')
+                'authenticated': os.path.exists('/data/icloud_session_configured'),
+                'IMPORTANT': [
+                    'Use your REAL Apple ID password (NOT app-specific password)',
+                    'Advanced Data Protection MUST be disabled in iCloud settings',
+                    'Access iCloud Data on the Web MUST be enabled',
+                    'Trust tokens expire after 30 days - you will need to re-authenticate'
+                ]
             })
         
         else:
@@ -132,8 +138,12 @@ password = {obscured_pass}
                 'success': True,
                 'message': 'Apple should send a 2FA code to your devices now. Check your iPhone/iPad!',
                 'next_step': 'Run: curl http://YOUR_HA_IP:8099/submit_code -X POST -d "YOUR_6_DIGIT_CODE"',
-                'note': 'This is a ONE-TIME setup to establish trust tokens. After this, no more 2FA needed!',
-                'tip': 'Make sure you are using an app-specific password from appleid.apple.com'
+                'note': 'This is a ONE-TIME setup to establish trust tokens (valid for 30 days)',
+                'IMPORTANT': 'You MUST use your REAL Apple ID password, NOT an app-specific password',
+                'requirements': [
+                    'Advanced Data Protection must be DISABLED in iCloud settings',
+                    'Access iCloud Data on the Web must be ENABLED'
+                ]
             })
         
         except Exception as e:

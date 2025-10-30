@@ -1,5 +1,31 @@
 # Changelog
 
+## [6.0.0] - 2025-10-30
+
+### BREAKING CHANGE - Correct Authentication Method
+
+**Previous versions were WRONG - app-specific passwords DO NOT work with iCloud Drive!**
+
+### Correct Requirements (per rclone documentation):
+1. ❌ **NO app-specific passwords** - must use REAL Apple ID password
+2. ⚠️ **Advanced Data Protection MUST be disabled** in iCloud settings
+3. ✅ **"Access iCloud Data on the Web" MUST be enabled**
+4. ✅ Interactive 2FA with real password during setup
+5. 🔄 Trust tokens expire after **30 days** - need periodic refresh
+
+### Why This Is Different:
+- iCloud Drive API requires real Apple ID password (not app-specific)
+- This is a limitation/requirement of Apple's iCloud Drive API
+- App-specific passwords simply don't work with iCloud Drive in rclone
+- Advanced Data Protection blocks third-party access entirely
+
+### Changes:
+- Updated to use real Apple ID password (not app-specific)
+- Added checks/warnings about Advanced Data Protection
+- Added checks/warnings about "Access iCloud Data on the Web"
+- Updated all documentation with correct requirements
+- Added 30-day token refresh requirement
+
 ## [5.2.0] - 2025-10-30
 
 ### Fixed - Root Cause Identified and Resolved
