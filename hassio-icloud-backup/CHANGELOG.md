@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.1.0] - 2025-10-30
+
+### Fixed - CRITICAL 2FA Fix
+- **Use `rclone config reconnect` instead of `rclone lsd`**
+- This is the correct command to trigger 2FA codes from Apple
+- Previous versions used wrong rclone command that didn't establish trust tokens
+- 2FA codes should now be sent to your devices properly
+
+### Root Cause
+rclone's iCloud backend requires `rclone config reconnect icloud:` 
+to establish initial trust tokens. Using `rclone lsd` skips the 
+interactive authentication and fails with "missing icloud trust token".
+
+### Important
+Make sure you're using an **app-specific password** from 
+https://appleid.apple.com/account/manage (not your regular Apple ID password)
+
 ## [5.0.1] - 2025-10-30
 
 ### Fixed

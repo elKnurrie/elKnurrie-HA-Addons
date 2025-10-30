@@ -109,9 +109,10 @@ pass = {obscured_pass}
             with open('/root/.config/rclone/rclone.conf', 'w') as f:
                 f.write(config_content)
             
-            # Start rclone to trigger 2FA
+            # Use 'rclone config reconnect' to properly trigger 2FA
+            # This is the correct way to establish trust tokens for iCloud
             proc = subprocess.Popen(
-                ['rclone', 'lsd', 'icloud:', '--verbose'],
+                ['rclone', 'config', 'reconnect', 'icloud:'],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -122,12 +123,14 @@ pass = {obscured_pass}
             auth_state['status'] = 'waiting_for_code'
             auth_state['message'] = 'Check your iPhone/iPad for the 2FA code'
             
-            time.sleep(2)
+            # Give rclone a moment to start the authentication process
+            time.sleep(3)
             
             self.send_json({
                 'success': True,
-                'message': 'Apple should send a 2FA code to your devices now',
-                'next_step': 'Run: curl http://localhost:8099/submit_code -X POST -d "YOUR_6_DIGIT_CODE"'
+                'message': '2FA code should be sent to your Apple devices now. Check your iPhone/iPad!',
+                'next_step': 'Run: curl http://YOUR_HA_IP:8099/submit_code -X POST -d "YOUR_6_DIGIT_CODE"',
+                'note': 'Enter the code within 60 seconds before it expires'
             })
         
         except Exception as e:
