@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.2] - 2025-10-30
+
+### Fixed - Correct parameter names for iCloud backend
+- Use `apple_id` and `password` instead of `user` and `pass`
+- rclone's iCloud backend requires these specific parameter names
+- Error "a apple ID is required" was due to wrong parameter names
+
 ## [5.1.1] - 2025-10-30
 
 ### Fixed - Correct rclone command sequence

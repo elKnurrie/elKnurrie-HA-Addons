@@ -97,10 +97,11 @@ class AuthAPIHandler(BaseHTTPRequestHandler):
             # Then use 'rclone lsf' to trigger 2FA
             try:
                 # First, create the config with rclone config create
+                # iCloud backend expects 'apple_id' and 'password' parameters
                 result = subprocess.run(
                     ['rclone', 'config', 'create', 'icloud', 'iclouddrive',
-                     f'user={username}',
-                     f'pass={password}'],
+                     f'apple_id={username}',
+                     f'password={password}'],
                     capture_output=True,
                     text=True,
                     timeout=10
