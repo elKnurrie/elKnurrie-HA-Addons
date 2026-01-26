@@ -26,7 +26,7 @@ su -s /bin/bash mongodb -c "mongod --dbpath /data/db --logpath /var/log/mongodb.
 # Wait for MongoDB to be ready
 echo "Waiting for MongoDB..."
 for i in {1..30}; do
-    if mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
+    if mongosh --eval "db.adminCommand('ping')" > /dev/null 2>&1 || mongo --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
         echo "MongoDB is ready!"
         break
     fi
@@ -37,7 +37,7 @@ done
 # Create database user if needed
 echo "Setting up database user..."
 if [ -n "$DB_PASSWORD" ]; then
-    mongosh --eval "
+    (mongosh --eval "
         db = db.getSiblingDB('admin');
         try {
             db.createUser({
@@ -49,11 +49,25 @@ if [ -n "$DB_PASSWORD" ]; then
         } catch(e) {
             print('User may already exist: ' + e.message);
         }
-    " 2>/dev/null || echo "Skipping user creation"
+    " 2>/dev/null || true) || \
+    (mongo --eval "
+        db = db.getSiblingDB('admin');
+        try {
+            db.createUser({
+                user: 'xbrowsersync',
+                pwd: '$DB_PASSWORD',
+                roles: [{ role: 'readWrite', db: 'xbrowsersync' }]
+            });
+            print('User created successfully');
+        } catch(e) {
+            print('User may already exist: ' + e.message);
+        }
+    " 2>/dev/null || true)
 fi
 
 # Create xbrowsersync database
-mongosh --eval "db = db.getSiblingDB('xbrowsersync');" 2>/dev/null || true
+(mongosh --eval "db = db.getSiblingDB('xbrowsersync');" 2>/dev/null || true) || \
+(mongo --eval "db = db.getSiblingDB('xbrowsersync');" 2>/dev/null || true)
 
 # Start xBrowserSync API
 echo "Starting xBrowserSync API..."

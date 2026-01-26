@@ -1,19 +1,19 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install MongoDB and dependencies
+# Install dependencies
 RUN apk add --no-cache \
     bash \
     curl \
     ca-certificates \
-    mongodb \
-    mongodb-tools \
+    gnupg \
     nodejs \
-    npm
+    npm \
+    && apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.19/community mongodb \
+    && rm -rf /var/cache/apk/*
 
-# Setup MongoDB data directory
-RUN mkdir -p /data/db && chown -R mongodb:mongodb /data && \
-    mkdir -p /var/log && chown mongodb:mongodb /var/log
+# Setup directories
+RUN mkdir -p /data/db /var/log && chown -R mongodb:mongodb /data /var/log
 
 # Download and setup xBrowserSync API
 RUN curl -L -o /tmp/xbrowsersync.tar.gz https://github.com/xbrowsersync/api/archive/refs/tags/1.18.1.tar.gz && \
