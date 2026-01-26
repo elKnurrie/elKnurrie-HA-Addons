@@ -1,7 +1,7 @@
 ARG BUILD_FROM
 FROM $BUILD_FROM
 
-# Install dependencies
+# Install dependencies including MongoDB tools
 RUN apk add --no-cache \
     bash \
     curl \
@@ -9,7 +9,9 @@ RUN apk add --no-cache \
     gnupg \
     nodejs \
     npm \
-    && apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/v3.19/community mongodb \
+    && curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor \
+    && echo "deb [signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg] https://repo.mongodb.org/apt/alpine/v3.19/mongodb-org/7.0 community" >> /etc/apk/repositories \
+    && apk add --no-cache mongodb-org \
     && rm -rf /var/cache/apk/*
 
 # Setup directories
