@@ -1,0 +1,32 @@
+{
+  "db": {
+    "host": "localhost",
+    "port": 27017,
+    "database": "xbrowsersync",
+    "username": "xbrowsersync",
+    "password": ""
+  },
+  "server": {
+    "port": 8080,
+    "hostname": "0.0.0.0"
+  },
+  "sync": {
+    "apiVersion": 1.3,
+    "latestVersion": "1.18.1",
+    "maxSyncIds": 5,
+    "newSyncs": true,
+    "publicSyncs": false,
+    "token": true,
+    "bookmarks": {
+      "forceRevisions": false,
+      "maxLength": 100000,
+      "updates": {
+        "interval": 10000,
+        "batchSize": 100
+      }
+    }
+  },
+  "logging": {
+    "level": "info"
+  }
+}

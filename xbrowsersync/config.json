@@ -1,0 +1,21 @@
+{
+  "name": "xBrowserSync",
+  "version": "1.0.0",
+  "slug": "xbrowsersync",
+  "description": "Self-hosted bookmark sync service with client-side encryption",
+  "url": "https://github.com/elKnurrie/elKnurrie-HA-Addons",
+  "arch": ["amd64", "aarch64"],
+  "startup": "application",
+  "boot": "auto",
+  "init": false,
+  "panel_icon": "mdi:bookmark",
+  "map": ["config:rw"],
+  "options": {
+    "db_password": "",
+    "api_port": 8080
+  },
+  "schema": {
+    "db_password": "password",
+    "api_port": "int"
+  }
+}
