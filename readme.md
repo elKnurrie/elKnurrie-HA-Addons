@@ -1,24 +1,23 @@
-# Home Assistant Add-on Repository
+# elKnurrie Home Assistant Add-ons
 
-This repository contains Home Assistant add-ons.
+Self-hosted addons for Home Assistant.
+
+## Available Addons
+
+### xBrowserSync
+Self-hosted bookmark sync service with client-side encryption.
+
+- **Repository:** https://github.com/elKnurrie/elKnurrie-HA-Addons
+- **Documentation:** See xbrowsersync/README.md
 
 ## Installation
 
-Add this repository to your Home Assistant add-on store:
+1. Go to **Settings** → **Add-ons** → **Add-on store**
+2. Click the **three dots** (⋮) → **Repositories**
+3. Add: `https://github.com/elKnurrie/elKnurrie-HA-Addons`
+4. Refresh the page to see the addons
 
-1. In Home Assistant, navigate to **Supervisor** > **Add-on Store**
-2. Click the three dots in the top right corner and select **Repositories**
-3. Add this repository URL: `https://github.com/elKnurrie/elKnurrie-HA-Addons`
-4. Refresh the add-on store
+## Support
 
-## Add-ons in this repository
-
-### Home Assistant iCloud Backup
-
-Automatically upload Home Assistant snapshots/backups to iCloud using rclone with WebDAV.
-
-**Features:**
-- Automatic backup synchronization to iCloud
-- Configurable retention policy
-- Support for multiple architectures
-- Uses reliable rclone for file transfers
+- [GitHub Issues](https://github.com/elKnurrie/elKnurrie-HA-Addons/issues)
+- [Home Assistant Community](https://community.home-assistant.io/)

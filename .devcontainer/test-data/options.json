@@ -1,7 +1,0 @@
-{
-  "icloud_username": "test@example.com",
-  "icloud_password": "test-password",
-  "backup_source": "/backup",
-  "icloud_folder": "HomeAssistantBackups",
-  "retention_days": 30
-}
