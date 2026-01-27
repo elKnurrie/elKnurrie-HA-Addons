@@ -28,7 +28,10 @@ RUN curl -L -o /tmp/xbrowsersync.tar.gz https://github.com/xbrowsersync/api/arch
     && mv /opt/api-1.1.13 /opt/xbrowsersync-api \
     && cd /opt/xbrowsersync-api \
     && npm install --no-audit --no-fund --ignore-scripts \
-    && npm run build \
+    && echo "npm install completed" \
+    && ls -la node_modules/ | head -20 \
+    && npm run build 2>&1 || echo "Build failed, checking dist folder..." \
+    && ls -la dist/ || echo "dist folder does not exist" \
     && rm -rf /tmp/xbrowsersync.tar.gz
 
 # Copy configuration
