@@ -38,6 +38,6 @@ RUN chmod +x /opt/xbrowsersync-api/run.sh
 WORKDIR /opt/xbrowsersync-api
 
 # Expose API port
-EXPOSE 8080
+EXPOSE 8913
 
 CMD ["./run.sh"]

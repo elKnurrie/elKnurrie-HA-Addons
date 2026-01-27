@@ -31,7 +31,7 @@ Self-hosted bookmark sync service with client-side encryption. Sync your browser
 | Option | Description | Default |
 |--------|-------------|---------|
 | `db_password` | Database password (required) | - |
-| `api_port` | Port for the API | 8080 |
+| `api_port` | Port for the API | 8913 |
 
 ### Ingress Setup (Optional)
 
@@ -51,7 +51,7 @@ ingress:
     ui_mode: toolbar
     title: "Bookmarks"
     icon: mdi:bookmark
-    url: http://localhost:3218
+    url: http://localhost:8913
 ```
 
 4. Restart Home Assistant
@@ -61,7 +61,7 @@ ingress:
 ### Get Your Server URL
 
 The addon runs internally. Use:
-- **Internal:** `http://localhost:3218` (from Home Assistant host)
+- **Internal:** `http://localhost:8913` (from Home Assistant host)
 - **External:** Your Home Assistant external URL (if using Ingress)
 
 ### Browser Extension Setup
@@ -72,7 +72,7 @@ The addon runs internally. Use:
 
 3. Enter your server URL:
    - For Ingress: `https://your-ha-domain.com/api/hubs/xbrowsersync`
-   - Direct: `http://your-ha-ip:3218`
+   - Direct: `http://your-ha-ip:8913`
 
 4. Create a new sync with a strong encryption password
 

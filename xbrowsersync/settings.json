@@ -1,13 +1,13 @@
 {
   "db": {
-    "host": "localhost",
+    "host": "127.0.0.1",
     "port": 27017,
     "database": "xbrowsersync",
     "username": "xbrowsersync",
     "password": ""
   },
   "server": {
-    "port": 8080,
+    "port": 8913,
     "hostname": "0.0.0.0"
   },
   "sync": {

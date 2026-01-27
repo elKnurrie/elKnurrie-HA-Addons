@@ -5,10 +5,10 @@ set -e
 CONFIG_PATH=/data/options.json
 if [ -f "$CONFIG_PATH" ]; then
     DB_PASSWORD=$(jq -r '.db_password // empty' "$CONFIG_PATH")
-    API_PORT=$(jq -r '.api_port // 8080' "$CONFIG_PATH")
+    API_PORT=$(jq -r '.api_port // 8913' "$CONFIG_PATH")
 else
     DB_PASSWORD="${DB_PASSWORD:-}"
-    API_PORT="${API_PORT:-8080}"
+    API_PORT="${API_PORT:-8913}"
 fi
 
 echo "DB_PASSWORD is set: $([ -n "$DB_PASSWORD" ] && echo 'yes' || echo 'no')"
@@ -21,7 +21,7 @@ fi
 
 # Update port if different
 if [ "$API_PORT" != "8080" ]; then
-    sed -i "s/\"port\": 8080/\"port\": $API_PORT/" /opt/xbrowsersync-api/config/settings.json
+    sed -i "s/\"port\": 8913/\"port\": $API_PORT/" /opt/xbrowsersync-api/config/settings.json
 fi
 
 # Create required directories
