@@ -27,7 +27,7 @@ RUN curl -L -o /tmp/xbrowsersync.tar.gz https://github.com/xbrowsersync/api/arch
     && tar -xzf /tmp/xbrowsersync.tar.gz -C /opt \
     && mv /opt/api-1.1.13 /opt/xbrowsersync-api \
     && cd /opt/xbrowsersync-api \
-    && npm install --production --no-audit --no-fund --ignore-scripts \
+    && npm install --no-audit --no-fund --ignore-scripts \
     && npm run build \
     && rm -rf /tmp/xbrowsersync.tar.gz
 
