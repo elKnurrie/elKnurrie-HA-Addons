@@ -72,4 +72,4 @@ mongosh --quiet --eval "db = db.getSiblingDB('xbrowsersync');" 2>/dev/null || tr
 # Start xBrowserSync API (keep in foreground)
 echo "Starting xBrowserSync API on port $API_PORT..."
 cd /opt/xbrowsersync-api
-node src/api.js
+node dist/api.js
