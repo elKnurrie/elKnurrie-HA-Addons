@@ -1,9 +1,18 @@
 #!/bin/bash
 set -e
 
-# Get password from options or environment
-DB_PASSWORD="${DB_PASSWORD:-${DB_PWD:-}}"
-API_PORT="${API_PORT:-8080}"
+# Read options from Home Assistant addon config
+CONFIG_PATH=/data/options.json
+if [ -f "$CONFIG_PATH" ]; then
+    DB_PASSWORD=$(jq -r '.db_password // empty' "$CONFIG_PATH")
+    API_PORT=$(jq -r '.api_port // 8080' "$CONFIG_PATH")
+else
+    DB_PASSWORD="${DB_PASSWORD:-}"
+    API_PORT="${API_PORT:-8080}"
+fi
+
+echo "DB_PASSWORD is set: $([ -n "$DB_PASSWORD" ] && echo 'yes' || echo 'no')"
+echo "API_PORT: $API_PORT"
 
 # Update settings.json with values
 if [ -n "$DB_PASSWORD" ]; then
@@ -16,12 +25,12 @@ if [ "$API_PORT" != "8080" ]; then
 fi
 
 # Create required directories
-mkdir -p /data/db /var/log
-chown -R mongodb:mongodb /data /var/log
+mkdir -p /data/db /var/log/mongodb
+chown -R mongodb:mongodb /data /var/log/mongodb
 
 # Start MongoDB in background
 echo "Starting MongoDB..."
-su -s /bin/bash mongodb -c "mongod --dbpath /data/db --logpath /var/log/mongodb.log --fork --bind_ip 127.0.0.1"
+su -s /bin/bash mongodb -c "mongod --dbpath /data/db --logpath /var/log/mongodb/mongodb.log --fork --bind_ip 127.0.0.1"
 
 # Wait for MongoDB to be ready
 echo "Waiting for MongoDB..."
@@ -32,7 +41,7 @@ for i in {1..30}; do
     fi
     if [ $i -eq 30 ]; then
         echo "MongoDB failed to start!"
-        cat /var/log/mongodb.log
+        cat /var/log/mongodb/mongodb.log
         exit 1
     fi
     echo "MongoDB not ready yet... ($i/30)"
@@ -60,7 +69,7 @@ fi
 # Ensure xbrowsersync database exists
 mongosh --quiet --eval "db = db.getSiblingDB('xbrowsersync');" 2>/dev/null || true
 
-# Start xBrowserSync API
+# Start xBrowserSync API (keep in foreground)
 echo "Starting xBrowserSync API on port $API_PORT..."
 cd /opt/xbrowsersync-api
-exec npm start
+node src/api.js
