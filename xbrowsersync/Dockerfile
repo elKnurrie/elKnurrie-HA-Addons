@@ -23,9 +23,9 @@ RUN mkdir -p /data/db /var/log/mongodb \
     && chown -R mongodb:mongodb /data /var/log/mongodb
 
 # Download and setup xBrowserSync API
-RUN curl -L -o /tmp/xbrowsersync.tar.gz https://github.com/xbrowsersync/api/archive/refs/tags/1.18.1.tar.gz \
+RUN curl -L -o /tmp/xbrowsersync.tar.gz https://github.com/xbrowsersync/api/archive/refs/tags/v1.1.13.tar.gz \
     && tar -xzf /tmp/xbrowsersync.tar.gz -C /opt \
-    && mv /opt/api-1.18.1 /opt/xbrowsersync-api \
+    && mv /opt/api-1.1.13 /opt/xbrowsersync-api \
     && cd /opt/xbrowsersync-api \
     && npm install --production --no-audit --no-fund \
     && rm -rf /tmp/xbrowsersync.tar.gz
