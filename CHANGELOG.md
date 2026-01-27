@@ -2,6 +2,14 @@
 
 All notable changes to this repository will be documented in this file.
 
+## [1.0.9] - 2026-01-27
+
+### Fixed
+- MongoDB connection error (ECONNREFUSED ::1:27017) by using explicit IPv4 address (127.0.0.1) instead of localhost
+
+### Changed
+- Default API port changed from 8080 to 8913 to avoid conflicts with common services
+
 ## [1.0.0] - 2026-01-26
 
 ### Added
